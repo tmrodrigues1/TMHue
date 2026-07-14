@@ -1,0 +1,118 @@
+# Release do TMHue: dispara em tags v* (ex.: v1.1.0).
+# Publica o app, empacota com Velopack (Setup.exe + full + delta + releases.win.json) e
+# anexa tudo à GitHub Release. O feed releases.win.json é o que o app instalado consulta
+# para descobrir novas versões (GithubSource sem token — releases públicas).
+#
+# Assinatura Authenticode é opcional. Sem os segredos CODESIGN_PFX_BASE64 e
+# CODESIGN_PFX_PASSWORD, a release é publicada sem assinatura.
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    env:
+      PACK_ID: com.thiagorodrigues.TMHue
+      REPO_URL: https://github.com/tmrodrigues1/TMHue
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extrair versão da tag
+        id: version
+        shell: pwsh
+        run: |
+          $version = '${{ github.ref_name }}'.TrimStart('v')
+          if ($version -notmatch '^\d+\.\d+\.\d+$') { throw "Tag inválida: use vX.Y.Z (recebi '${{ github.ref_name }}')." }
+          "version=$version" >> $env:GITHUB_OUTPUT
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Instalar CLI do Velopack
+        run: dotnet tool install -g vpk
+
+      # Importa o PFX no repositório de certificados do usuário do runner e assina por
+      # thumbprint (/sha1): a senha nunca aparece na linha de comando do vpk/signtool,
+      # que ficaria visível na listagem de processos do runner.
+      - name: Preparar assinatura Authenticode
+        id: signing
+        shell: pwsh
+        env:
+          PFX_BASE64: ${{ secrets.CODESIGN_PFX_BASE64 }}
+          PFX_PASSWORD: ${{ secrets.CODESIGN_PFX_PASSWORD }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:PFX_BASE64)) {
+            Write-Warning 'Release SEM assinatura Authenticode: certificado não configurado.'
+            "signed=false" >> $env:GITHUB_OUTPUT
+            exit 0
+          }
+          $pfx = Join-Path $env:RUNNER_TEMP 'codesign.pfx'
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:PFX_BASE64))
+          try {
+            $password = ConvertTo-SecureString $env:PFX_PASSWORD -AsPlainText -Force
+            $cert = Import-PfxCertificate -FilePath $pfx -CertStoreLocation Cert:\CurrentUser\My -Password $password
+          } finally {
+            Remove-Item $pfx -Force
+          }
+          "signed=true" >> $env:GITHUB_OUTPUT
+          "thumbprint=$($cert.Thumbprint)" >> $env:GITHUB_OUTPUT
+
+      - name: Publicar TMHue
+        shell: pwsh
+        run: |
+          $v = '${{ steps.version.outputs.version }}'
+          dotnet publish src/TMHue.App/TMHue.App.csproj -c Release -r win-x64 --self-contained true `
+            -p:PublishSingleFile=false -p:Version="$v.0" -p:InformationalVersion=$v `
+            -o artifacts/publish
+          if ($LASTEXITCODE -ne 0) { throw 'Falha no dotnet publish.' }
+
+      # Baixa a release anterior do GitHub para o vpk gerar o pacote delta.
+      - name: Baixar release anterior (delta)
+        shell: pwsh
+        continue-on-error: true
+        run: vpk download github --repoUrl $env:REPO_URL --outputDir artifacts/releases
+
+      - name: Empacotar com Velopack
+        shell: pwsh
+        run: |
+          $v = '${{ steps.version.outputs.version }}'
+          $vpkArgs = @(
+            'pack',
+            '--packId', $env:PACK_ID,
+            '--packVersion', $v,
+            '--packDir', 'artifacts/publish',
+            '--mainExe', 'TMHue.exe',
+            '--packTitle', 'TMHue',
+            '--packAuthors', 'Thiago Rodrigues',
+            '--icon', 'src/TMHue.App/Assets/tray-icon.ico',
+            '--splashImage', 'packaging/velopack/splash.gif',
+            '--splashProgressColor', 'None',
+            '--outputDir', 'artifacts/releases',
+            '--shortcuts', 'Desktop,StartMenuRoot'
+          )
+          if ('${{ steps.signing.outputs.signed }}' -eq 'true') {
+            $vpkArgs += @('--signParams', '/sha1 ${{ steps.signing.outputs.thumbprint }} /fd sha256 /tr http://timestamp.digicert.com /td sha256')
+          }
+          vpk @vpkArgs
+          if ($LASTEXITCODE -ne 0) { throw 'Falha no vpk pack.' }
+
+      # Cria a GitHub Release (estável, nunca pré-release) e anexa Setup.exe,
+      # pacote completo, delta e releases.win.json.
+      - name: Publicar GitHub Release
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $v = '${{ steps.version.outputs.version }}'
+          vpk upload github --repoUrl $env:REPO_URL --token $env:GITHUB_TOKEN `
+            --outputDir artifacts/releases `
+            --releaseName "TMHue $v" --tag 'v${{ steps.version.outputs.version }}' --publish
+          if ($LASTEXITCODE -ne 0) { throw 'Falha no vpk upload.' }

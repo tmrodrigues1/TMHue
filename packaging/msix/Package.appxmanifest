@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap rescap">
+
+  <Identity Name="TMHue.App" Publisher="CN=TMHue" Version="1.0.0.0" ProcessorArchitecture="x64" />
+
+  <Properties>
+    <DisplayName>TMHue</DisplayName>
+    <PublisherDisplayName>TMHue</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.19041.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="pt-BR" />
+  </Resources>
+
+  <Applications>
+    <Application Id="TMHue" Executable="TMHue.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="TMHue"
+        Description="Captura de cores exibidas em qualquer ponto da tela."
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />
+      </uap:VisualElements>
+
+      <Extensions>
+        <!-- Habilita "Iniciar com o Windows" gerenciado pela Store/MSIX, em complemento ao registro Run usado no build não empacotado. -->
+        <uap5:Extension xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5"
+                         Category="windows.startupTask">
+          <uap5:StartupTask
+            TaskId="TMHueStartup"
+            Enabled="false"
+            DisplayName="TMHue" />
+        </uap5:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+
+</Package>

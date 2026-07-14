@@ -1,0 +1,465 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Primary call-to-action button: solid accent fill, gentle hover/press states. -->
+    <Style x:Key="Button.Primary" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource Brush.Accent}" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="FontFamily" Value="{StaticResource Font.Text}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Padding" Value="18,10" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Chrome" Background="{TemplateBinding Background}" CornerRadius="10">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.AccentHover}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.AccentPressed}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Chrome" Property="Opacity" Value="0.5" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Full-width gradient call-to-action, per the reference design. -->
+    <Style x:Key="Button.Capture" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource Brush.CaptureGradient}" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="FontFamily" Value="{StaticResource Font.Text}" />
+        <Setter Property="FontSize" Value="17" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Height" Value="56" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Chrome" Background="{TemplateBinding Background}" CornerRadius="12"
+                            BorderBrush="#26FFFFFF" BorderThickness="1">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.CaptureGradientHover}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.CaptureGradientPressed}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Chrome" Property="Opacity" Value="0.5" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Window-control buttons: rounded squares with a faint fill, per the reference design. -->
+    <Style x:Key="Button.WindowControl" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceSunken}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
+        <Setter Property="Width" Value="34" />
+        <Setter Property="Height" Value="34" />
+        <Setter Property="FontSize" Value="10" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Chrome" Background="{TemplateBinding Background}"
+                            BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="10">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.BorderStrong}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.Border}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="Button.WindowClose" TargetType="Button" BasedOn="{StaticResource Button.WindowControl}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Chrome" Background="{TemplateBinding Background}"
+                            BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="10">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="#E81123" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="#C50E1F" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Footer "Configurações" pill. -->
+    <Style x:Key="Button.SettingsPill" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceSunken}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+        <Setter Property="FontFamily" Value="{StaticResource Font.Text}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Padding" Value="16,10" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Chrome" Background="{TemplateBinding Background}"
+                            BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
+                            CornerRadius="12" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.BorderStrong}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.Border}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- "Voltar" text-only action for the more-colors sidebar: no chrome, no hover glow, just the
+         label + icon, kept plain per design direction. -->
+    <Style x:Key="Button.BackPill" TargetType="Button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
+        <Setter Property="FontFamily" Value="{StaticResource Font.Text}" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="Transparent" Padding="12,7">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Chromeless icon button used for window controls and the settings gear. -->
+    <Style x:Key="Button.Icon" TargetType="Button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
+        <Setter Property="Width" Value="32" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Chrome" Background="{TemplateBinding Background}" CornerRadius="8">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.SurfaceSunken}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.Border}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Close button gets a destructive-red hover, matching Windows conventions. -->
+    <Style x:Key="Button.Close" TargetType="Button" BasedOn="{StaticResource Button.Icon}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Chrome" Background="{TemplateBinding Background}" CornerRadius="8">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="#E81123" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="#C50E1F" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- History swatch: rounded square, subtle border, scale-up on hover for tactile feedback. -->
+    <Style x:Key="Swatch.History" TargetType="Border">
+        <Setter Property="Width" Value="34" />
+        <Setter Property="Height" Value="34" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.BorderStrong}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+        <Setter Property="RenderTransform">
+            <Setter.Value>
+                <ScaleTransform ScaleX="1" ScaleY="1" />
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="RenderTransform">
+                    <Setter.Value>
+                        <ScaleTransform ScaleX="1.12" ScaleY="1.12" />
+                    </Setter.Value>
+                </Setter>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- App-wide checkbox: rounded accent-filled box with a checkmark glyph, replacing the
+         default Windows checkbox so settings screens match the rest of the app's design. -->
+    <Style TargetType="CheckBox">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+        <Setter Property="FontFamily" Value="{StaticResource Font.Text}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border x:Name="Box" Grid.Column="0" Width="18" Height="18" CornerRadius="5"
+                                Background="{DynamicResource Brush.SurfaceSunken}"
+                                BorderBrush="{DynamicResource Brush.BorderStrong}" BorderThickness="1">
+                            <TextBlock x:Name="Check" Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="9"
+                                       Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Opacity="0" />
+                        </Border>
+                        <ContentPresenter Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Box" Property="Background" Value="{DynamicResource Brush.Accent}" />
+                            <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
+                            <Setter TargetName="Check" Property="Opacity" Value="1" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource Brush.HotkeyText}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- App-wide radio button: same rounded-indicator language as the checkbox, circular with
+         an inner dot instead of a checkmark. -->
+    <Style TargetType="RadioButton">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+        <Setter Property="FontFamily" Value="{StaticResource Font.Text}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border x:Name="Circle" Grid.Column="0" Width="18" Height="18" CornerRadius="9"
+                                Background="{DynamicResource Brush.SurfaceSunken}"
+                                BorderBrush="{DynamicResource Brush.BorderStrong}" BorderThickness="1">
+                            <Ellipse x:Name="Dot" Width="8" Height="8" Fill="White" Opacity="0" />
+                        </Border>
+                        <ContentPresenter Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Circle" Property="Background" Value="{DynamicResource Brush.Accent}" />
+                            <Setter TargetName="Circle" Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
+                            <Setter TargetName="Dot" Property="Opacity" Value="1" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Circle" Property="BorderBrush" Value="{DynamicResource Brush.HotkeyText}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- App-wide combo box item: rounded highlight instead of the stock blue selection rectangle,
+         matching the checkbox/radio button's rounded-surface language. -->
+    <Style TargetType="ComboBoxItem">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+        <Setter Property="FontFamily" Value="{StaticResource Font.Text}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Padding" Value="10,7" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBoxItem">
+                    <Border x:Name="Chrome" Background="Transparent" CornerRadius="8"
+                            Padding="{TemplateBinding Padding}" Margin="4,1">
+                        <ContentPresenter />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.SurfaceSunken}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.AccentSoft}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- App-wide combo box: rounded surface field with a custom chevron and a popup styled like
+         the app's cards, replacing the stock Windows dropdown so settings screens read as one
+         design instead of mixing native chrome with the custom checkbox/radio controls. -->
+    <Style TargetType="ComboBox">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+        <Setter Property="FontFamily" Value="{StaticResource Font.Text}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="Padding" Value="10,0" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Disabled" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBox">
+                    <Grid>
+                        <ToggleButton x:Name="Toggle"
+                                      Background="{DynamicResource Brush.SurfaceSunken}"
+                                      BorderBrush="{DynamicResource Brush.BorderStrong}"
+                                      Focusable="False" ClickMode="Press"
+                                      IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <Border x:Name="Chrome" Background="{TemplateBinding Background}"
+                                            BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1"
+                                            CornerRadius="8" />
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource Brush.HotkeyText}" />
+                                        </Trigger>
+                                        <Trigger Property="IsChecked" Value="True">
+                                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+                        </ToggleButton>
+
+                        <ContentPresenter x:Name="ContentSite" IsHitTestVisible="False"
+                                           Content="{TemplateBinding SelectionBoxItem}"
+                                           ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                           ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                           Margin="{TemplateBinding Padding}"
+                                           HorizontalAlignment="Left" VerticalAlignment="Center" />
+
+                        <TextBlock Text="&#xE70D;" FontFamily="Segoe MDL2 Assets" FontSize="8"
+                                   Foreground="{DynamicResource Brush.TextSecondary}"
+                                   HorizontalAlignment="Right" VerticalAlignment="Center"
+                                   Margin="0,0,11,0" IsHitTestVisible="False" />
+
+                        <Popup x:Name="Popup" Placement="Bottom" AllowsTransparency="True"
+                               Focusable="False" PopupAnimation="Fade" VerticalOffset="6"
+                               IsOpen="{TemplateBinding IsDropDownOpen}">
+                            <Border Background="{DynamicResource Brush.SurfaceElevated}"
+                                    BorderBrush="{DynamicResource Brush.BorderStrong}" BorderThickness="1"
+                                    CornerRadius="12" Padding="0,4" SnapsToDevicePixels="True"
+                                    Effect="{DynamicResource Shadow.Card}"
+                                    Width="{Binding ActualWidth, ElementName=Toggle}">
+                                <ScrollViewer SnapsToDevicePixels="True">
+                                    <ItemsPresenter />
+                                </ScrollViewer>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Small pill button for inline actions inside a card (e.g. "Alterar atalho"). -->
+    <Style x:Key="Button.Pill" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceSunken}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+        <Setter Property="FontFamily" Value="{StaticResource Font.Text}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Padding" Value="12,6" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Chrome" Background="{TemplateBinding Background}"
+                            BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
+                            CornerRadius="9" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.BorderStrong}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.Border}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Dark, rounded tooltip matching the app surface, applied app-wide. -->
+    <Style TargetType="ToolTip">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToolTip">
+                    <Border Background="{DynamicResource Brush.SurfaceElevated}"
+                            BorderBrush="{DynamicResource Brush.BorderStrong}"
+                            BorderThickness="1" CornerRadius="8" Padding="12,10"
+                            Effect="{DynamicResource Shadow.Card}">
+                        <ContentPresenter />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="Card.Surface" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceElevated}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="14" />
+        <Setter Property="Effect" Value="{DynamicResource Shadow.Card}" />
+    </Style>
+
+</ResourceDictionary>

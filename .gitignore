@@ -1,0 +1,36 @@
+# .NET build output
+[Bb]in/
+[Oo]bj/
+artifacts/
+TestResults/
+*.trx
+_about/
+
+# IDE and user-specific files
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Publish and package output
+publish/
+dist/
+*.exe
+*.msi
+*.msix
+*.msixbundle
+*.appx
+*.appxbundle
+
+# Signing material and local configuration
+*.pfx
+*.p12
+*.snk
+*.pem
+*.key
+*.cer
+.env
+.env.*
+appsettings.Local.json

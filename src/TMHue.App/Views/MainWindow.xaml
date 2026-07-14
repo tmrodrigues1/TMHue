@@ -1,0 +1,404 @@
+<Window x:Class="TMHue.App.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:conv="clr-namespace:TMHue.App.Converters"
+        Title="TMHue"
+        SizeToContent="WidthAndHeight"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="NoResize">
+
+    <Window.Resources>
+        <conv:CapturedColorToBrushConverter x:Key="CapturedColorToBrush" />
+        <conv:PinBorderBrushConverter x:Key="PinBorderBrush" />
+        <conv:TextLengthToFontSizeConverter x:Key="TextLengthToFontSize" />
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <!-- Fluent-style eyedropper, drawn as a path so it renders identically on any Windows. -->
+        <Geometry x:Key="Geometry.Eyedropper">M21.6,2.4 A3.4,3.4 0 0 0 16.8,2.4 L14,5.2 12.7,3.9 A1,1 0 1 0 11.3,5.3 L11.95,5.95 4,13.9 A2,2 0 0 0 3.45,14.93 L2.6,19.2 A1,1 0 0 0 3.8,20.4 L8.07,19.55 A2,2 0 0 0 9.1,19 L17.05,11.05 17.7,11.7 A1,1 0 0 0 19.1,10.3 L17.8,9 20.6,6.2 A3.4,3.4 0 0 0 21.6,2.4 Z M8.7,17.6 5.3,18.28 5.98,14.88 13.58,7.28 16.3,10 Z</Geometry>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+    <Border Grid.Column="0"
+            Width="372"
+            Background="{DynamicResource Brush.Surface}"
+            BorderBrush="{DynamicResource Brush.Border}"
+            BorderThickness="1"
+            CornerRadius="18"
+            Effect="{DynamicResource Shadow.Window}"
+            Margin="14">
+
+        <Grid Margin="22,10,22,22">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Title bar: app icon + name on the left, window controls on the right -->
+            <Grid Grid.Row="0" MouseLeftButtonDown="OnTitleBarDrag" Background="Transparent" Height="42">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Image Source="pack://application:,,,/Assets/tray-icon.ico" Width="28" Height="28"
+                           RenderOptions.BitmapScalingMode="HighQuality" />
+                    <TextBlock Style="{StaticResource Text.Title}" FontSize="15"
+                               Margin="10,0,0,0" VerticalAlignment="Center">
+                        <Run Text="TMHue" />
+                        <Run Text=" | " Foreground="{DynamicResource Brush.TextSecondary}" />
+                        <Run Text="Cores em um clique" Foreground="{DynamicResource Brush.TextSecondary}" FontSize="11" />
+                    </TextBlock>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Style="{StaticResource Button.Icon}" Content="&#xE921;" FontFamily="Segoe MDL2 Assets"
+                            FontSize="10" Width="30" Height="30"
+                            Click="OnMinimizeClick" ToolTip="Minimizar" Margin="0,0,4,0" />
+                    <Button Style="{StaticResource Button.Close}" Content="&#xE8BB;" FontFamily="Segoe MDL2 Assets"
+                            FontSize="10" Width="30" Height="30"
+                            Click="OnCloseClick" ToolTip="Fechar" />
+                </StackPanel>
+            </Grid>
+
+            <!-- Current color card: big swatch | hex + copy | R G B columns -->
+            <Border Grid.Row="1" Padding="14" Margin="0,8,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Width="78" Height="78" CornerRadius="12"
+                            BorderBrush="{DynamicResource Brush.BorderStrong}" BorderThickness="1"
+                            Background="{Binding CurrentBrush}" Margin="-14,0,0,0" />
+
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="14,0,0,0">
+                        <!-- Grid instead of a horizontal StackPanel: the copy button gets a fixed
+                             Auto column so it's always visible. The value text is confined to the
+                             remaining star column and its font shrinks with length (see
+                             TextLengthToFontSizeConverter), so the longest RGB/HSL readouts (e.g.
+                             "hsl(359, 100%, 100%)") render in full instead of being ellipsized. -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{Binding PrimaryFormat.Value}" Style="{StaticResource Text.HexValue}"
+                                       FontSize="{Binding PrimaryFormat.Value, Converter={StaticResource TextLengthToFontSize}}"
+                                       VerticalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis" />
+                            <Button Grid.Column="1" Style="{StaticResource Button.Icon}" Width="34" Height="34"
+                                    Content="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="15"
+                                    Foreground="{DynamicResource Brush.HotkeyText}"
+                                    Command="{Binding CopyCurrentCommand}"
+                                    ToolTip="{Binding PrimaryFormat.Label, StringFormat='Copiar {0}'}"
+                                    Margin="8,2,0,0" />
+                        </Grid>
+
+                        <!-- The other three formats, one per line, small/discreet — click to copy
+                             that specific format without changing the configured default. -->
+                        <ItemsControl ItemsSource="{Binding SecondaryFormats}" Margin="0,8,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,3,0,0" Cursor="Hand" ToolTip="Clique para copiar">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="46" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.InputBindings>
+                                            <MouseBinding MouseAction="LeftClick"
+                                                          Command="{Binding DataContext.CopyFormatCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                          CommandParameter="{Binding}" />
+                                        </Grid.InputBindings>
+                                        <TextBlock Grid.Column="0" Text="{Binding Label}" FontSize="10" FontWeight="SemiBold"
+                                                   FontFamily="{StaticResource Font.Text}"
+                                                   Foreground="{DynamicResource Brush.TextTertiary}"
+                                                   VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Value}" FontSize="12"
+                                                   FontFamily="{StaticResource Font.Mono}"
+                                                   Foreground="{DynamicResource Brush.TextSecondary}"
+                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Capture button + WCAG contrast checker shortcut: identical size/style, side by side. -->
+            <Grid Grid.Row="2" Margin="0,14,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="0" Style="{StaticResource Button.Capture}" FontSize="13" Height="48"
+                        Command="{Binding CaptureCommand}" HorizontalAlignment="Stretch" Margin="0,0,7,0">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Data="{StaticResource Geometry.Eyedropper}" Fill="White" Width="13" Height="13"
+                              Stretch="Uniform" VerticalAlignment="Center" />
+                        <TextBlock Text="Capturar uma cor" VerticalAlignment="Center" Margin="8,0,0,0" />
+                    </StackPanel>
+                </Button>
+
+                <Button Grid.Column="1" Style="{StaticResource Button.Capture}" FontSize="13" Height="48"
+                        Click="OnContrastCheckerClick" HorizontalAlignment="Stretch" Margin="7,0,0,0"
+                        ToolTip="Verificar contraste WCAG entre duas cores">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE793;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                   Foreground="White" VerticalAlignment="Center" />
+                        <TextBlock Text="Contraste (WCAG)" VerticalAlignment="Center" Margin="8,0,0,0" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+
+            <!-- History -->
+            <StackPanel Grid.Row="3" Margin="0,22,0,0">
+                <Grid Margin="2,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <TextBlock Text="Últimas cores" Style="{StaticResource Text.Title}" FontSize="13"
+                               VerticalAlignment="Center" />
+                    <TextBlock Text="&#xE9CE;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                               Foreground="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center"
+                               Margin="6,0,0,0" Cursor="Help"
+                               ToolTipService.InitialShowDelay="0" ToolTipService.ShowDuration="60000">
+                        <TextBlock.ToolTip>
+                            <ToolTip>
+                                <StackPanel MaxWidth="230">
+                                    <TextBlock TextWrapping="Wrap" LineHeight="17">
+                                        <Run Text="Clique com o botão " /><Run Text="direito"
+                                             FontWeight="SemiBold" Foreground="{DynamicResource Brush.HotkeyText}" /><Run
+                                             Text=" para fixar uma cor, mantendo-a na lista mesmo capturando outras." />
+                                    </TextBlock>
+                                    <TextBlock TextWrapping="Wrap" LineHeight="17" Margin="0,8,0,0">
+                                        <Run Text="Clique com o botão " /><Run Text="esquerdo"
+                                             FontWeight="SemiBold" Foreground="{DynamicResource Brush.HotkeyText}" /><Run
+                                             Text=" para copiar a cor para a área de transferência." />
+                                    </TextBlock>
+                                    <TextBlock TextWrapping="Wrap" LineHeight="17" Margin="0,8,0,0">
+                                        <Run Text="Você pode fixar até " /><Run Text="3 cores"
+                                             FontWeight="SemiBold" Foreground="{DynamicResource Brush.HotkeyText}" /><Run
+                                             Text=": elas não são alteradas nem substituídas." />
+                                    </TextBlock>
+                                </StackPanel>
+                            </ToolTip>
+                        </TextBlock.ToolTip>
+                    </TextBlock>
+                </StackPanel>
+
+                    <Button Grid.Column="1" Style="{StaticResource Button.Icon}"
+                            Width="Auto" Height="Auto" VerticalAlignment="Center"
+                            Command="{Binding ToggleMorePanelCommand}"
+                            ToolTip="Mostrar/ocultar mais cores capturadas">
+                        <TextBlock Text="{Binding MorePanelToggleLabel}" FontFamily="{StaticResource Font.Text}"
+                                   FontSize="12" Foreground="{DynamicResource Brush.TextSecondary}" Margin="8,4" />
+                    </Button>
+                </Grid>
+
+                <ItemsControl ItemsSource="{Binding History}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Rows="1" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="0,0,8,0">
+                                <Border Style="{StaticResource Swatch.History}" Width="Auto" Height="38"
+                                        CornerRadius="8"
+                                        Background="{Binding Converter={StaticResource CapturedColorToBrush}}"
+                                        BorderThickness="2"
+                                        BorderBrush="{Binding IsPinned, Converter={StaticResource PinBorderBrush}}"
+                                        ToolTip="Clique esquerdo: copiar · Clique direito: fixar (máx. 3)">
+                                    <Border.InputBindings>
+                                        <MouseBinding MouseAction="LeftClick"
+                                                      Command="{Binding DataContext.CopySwatchCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                      CommandParameter="{Binding}" />
+                                        <MouseBinding MouseAction="RightClick"
+                                                      Command="{Binding DataContext.TogglePinCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                      CommandParameter="{Binding}" />
+                                    </Border.InputBindings>
+                                </Border>
+                                <TextBlock Text="{Binding Hex}" FontFamily="{StaticResource Font.Mono}" FontSize="10"
+                                           Foreground="#FFD6D4DE"
+                                           HorizontalAlignment="Center" Margin="0,5,0,0" />
+                                <TextBlock Text="Fixada" FontSize="9" FontWeight="SemiBold" HorizontalAlignment="Center"
+                                           Foreground="{DynamicResource Brush.HotkeyText}"
+                                           Visibility="{Binding IsPinned, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+            <!-- Footer: hotkeys on the left, settings pill on the right -->
+            <Grid Grid.Row="4" Margin="0,22,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Background="{DynamicResource Brush.SurfaceSunken}"
+                            BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
+                            CornerRadius="9" Width="30" Height="30">
+                        <TextBlock Text="&#xE765;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                   Foreground="{DynamicResource Brush.TextSecondary}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel VerticalAlignment="Center" Margin="12,0,0,0">
+                        <TextBlock FontSize="12" FontFamily="{StaticResource Font.Text}">
+                            <Run Text="Copiar cor: " Foreground="{DynamicResource Brush.TextSecondary}" /><Run
+                                 Text="{Binding HotkeyDisplay, Mode=OneWay}"
+                                 Foreground="{DynamicResource Brush.HotkeyText}" FontWeight="SemiBold" />
+                        </TextBlock>
+                        <TextBlock FontSize="12" FontFamily="{StaticResource Font.Text}" Margin="0,2,0,0">
+                            <Run Text="Abrir app: " Foreground="{DynamicResource Brush.TextSecondary}" /><Run
+                                 Text="{Binding OpenAppHotkeyDisplay, Mode=OneWay}"
+                                 Foreground="{DynamicResource Brush.HotkeyText}" FontWeight="SemiBold" />
+                        </TextBlock>
+                        <TextBlock FontSize="12" FontFamily="{StaticResource Font.Text}" Margin="0,2,0,0">
+                            <Run Text="Abrir contraste: " Foreground="{DynamicResource Brush.TextSecondary}" /><Run
+                                 Text="{Binding ContrastCheckerHotkeyDisplay, Mode=OneWay}"
+                                 Foreground="{DynamicResource Brush.HotkeyText}" FontWeight="SemiBold" />
+                        </TextBlock>
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Style="{StaticResource Button.SettingsPill}"
+                            Padding="10" Margin="0,0,8,0"
+                            Command="{Binding ClearHistoryCommand}" ToolTip="Limpar todas as cores">
+                        <TextBlock Text="&#xE75C;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                   Foreground="{DynamicResource Brush.TextSecondary}" />
+                    </Button>
+
+                    <Button Style="{StaticResource Button.SettingsPill}" Click="OnSettingsClick"
+                            Padding="10" ToolTip="Configurações">
+                        <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                   Foreground="{DynamicResource Brush.TextSecondary}" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <!-- Version / author line -->
+            <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,22,0,0">
+                <TextBlock Text="{Binding VersionDisplay, Mode=OneWay}" Style="{StaticResource Text.Caption}" FontSize="11" />
+                <TextBlock Text=" · " Style="{StaticResource Text.Caption}" FontSize="11" />
+                <TextBlock Style="{StaticResource Text.Caption}" FontSize="11">
+                    <Run Text="Desenvolvido por " />
+                    <Hyperlink NavigateUri="https://thiagorodrigues1.com.br/" RequestNavigate="OnAuthorLinkClick"
+                                Foreground="{DynamicResource Brush.HotkeyText}">
+                        <Run Text="Thiago Rodrigues" />
+                    </Hyperlink>
+                </TextBlock>
+            </StackPanel>
+        </Grid>
+    </Border>
+
+        <!-- "Ver mais" sidebar: extra captured colors beyond the five shown in the main card.
+             Lives in a second column so it always matches the app card's height. -->
+        <Border Grid.Column="1"
+                Width="104"
+                Background="{DynamicResource Brush.Surface}"
+                BorderBrush="{DynamicResource Brush.Border}"
+                BorderThickness="1"
+                CornerRadius="18"
+                Effect="{DynamicResource Shadow.Window}"
+                Margin="0,14,14,14"
+                Visibility="{Binding IsMorePanelOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid Margin="0,16,0,16">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Button Grid.Row="0" Style="{StaticResource Button.BackPill}"
+                        HorizontalAlignment="Center"
+                        Command="{Binding CloseMorePanelCommand}" ToolTip="Voltar para a tela principal">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE72B;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                   VerticalAlignment="Center" />
+                        <TextBlock Text="Voltar" VerticalAlignment="Center" Margin="6,0,0,0" />
+                    </StackPanel>
+                </Button>
+
+                <Grid Grid.Row="1" Margin="0,14,0,0">
+                    <TextBlock Text="As próximas cores capturadas aparecem aqui."
+                               FontFamily="{StaticResource Font.Text}" FontSize="11"
+                               Foreground="{DynamicResource Brush.TextSecondary}"
+                               TextWrapping="Wrap" TextAlignment="Center" Margin="12,8">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasMoreColors}" Value="False">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <!-- UniformGrid spreads the (at most) 5 extra swatches evenly across the
+                         panel's full height, so the sidebar never needs to scroll or grow taller
+                         than the main card. -->
+                    <ItemsControl ItemsSource="{Binding MoreColors}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="1" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Border Style="{StaticResource Swatch.History}" Width="52" Height="44"
+                                                CornerRadius="10"
+                                                Background="{Binding Converter={StaticResource CapturedColorToBrush}}"
+                                                BorderThickness="2"
+                                                BorderBrush="{Binding IsPinned, Converter={StaticResource PinBorderBrush}}"
+                                                ToolTip="Clique esquerdo: copiar · Clique direito: fixar (máx. 3)">
+                                            <Border.InputBindings>
+                                                <MouseBinding MouseAction="LeftClick"
+                                                              Command="{Binding DataContext.CopySwatchCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                              CommandParameter="{Binding}" />
+                                                <MouseBinding MouseAction="RightClick"
+                                                              Command="{Binding DataContext.TogglePinCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                              CommandParameter="{Binding}" />
+                                            </Border.InputBindings>
+                                        </Border>
+                                        <TextBlock Text="{Binding Hex}" FontFamily="{StaticResource Font.Mono}"
+                                                   FontSize="10" Foreground="#FFD6D4DE"
+                                                   HorizontalAlignment="Center" Margin="0,5,0,0" />
+                                        <TextBlock Text="Fixada" FontSize="9" FontWeight="SemiBold"
+                                                   HorizontalAlignment="Center"
+                                                   Foreground="{DynamicResource Brush.HotkeyText}"
+                                                   Visibility="{Binding IsPinned, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

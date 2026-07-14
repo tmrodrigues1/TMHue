@@ -1,0 +1,34 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Near-black with a subtle violet cast, matching the reference design. -->
+    <SolidColorBrush x:Key="Brush.Surface" Color="#FF0E0E10" />
+    <SolidColorBrush x:Key="Brush.SurfaceElevated" Color="#FF17171A" />
+    <SolidColorBrush x:Key="Brush.SurfaceSunken" Color="#FF1A1921" />
+    <SolidColorBrush x:Key="Brush.Border" Color="#FF232230" />
+    <SolidColorBrush x:Key="Brush.BorderStrong" Color="#FF34323F" />
+
+    <SolidColorBrush x:Key="Brush.TextPrimary" Color="#FFF5F4F8" />
+    <SolidColorBrush x:Key="Brush.TextSecondary" Color="#FF8A8894" />
+    <SolidColorBrush x:Key="Brush.TextTertiary" Color="#FF6E6C78" />
+
+    <SolidColorBrush x:Key="Brush.Accent" Color="#FF7C5CFC" />
+    <SolidColorBrush x:Key="Brush.AccentHover" Color="#FF8F73FD" />
+    <SolidColorBrush x:Key="Brush.AccentPressed" Color="#FF6A4BE0" />
+    <SolidColorBrush x:Key="Brush.AccentSoft" Color="#337C5CFC" />
+    <SolidColorBrush x:Key="Brush.HotkeyText" Color="#FF9D8CFF" />
+
+    <!-- Capture button: flat near-black fill per the reference design, with subtle hover/pressed lift. -->
+    <SolidColorBrush x:Key="Brush.CaptureGradient" Color="#FF17171A" />
+    <SolidColorBrush x:Key="Brush.CaptureGradientHover" Color="#FF201F24" />
+    <SolidColorBrush x:Key="Brush.CaptureGradientPressed" Color="#FF121215" />
+
+    <SolidColorBrush x:Key="Brush.OverlayScrim" Color="#80000000" />
+    <SolidColorBrush x:Key="Brush.PreviewSurface" Color="#F50D0C12" />
+    <SolidColorBrush x:Key="Brush.PreviewText" Color="#FFF5F4F8" />
+
+    <DropShadowEffect x:Key="Shadow.Window" Color="#000000" Opacity="0.6" BlurRadius="24" ShadowDepth="6" Direction="270" />
+    <DropShadowEffect x:Key="Shadow.Card" Color="#000000" Opacity="0.25" BlurRadius="14" ShadowDepth="3" Direction="270" />
+    <DropShadowEffect x:Key="Shadow.Preview" Color="#000000" Opacity="0.6" BlurRadius="20" ShadowDepth="8" Direction="270" />
+
+</ResourceDictionary>

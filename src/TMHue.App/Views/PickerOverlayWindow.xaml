@@ -1,0 +1,15 @@
+<Window x:Class="TMHue.App.Views.PickerOverlayWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ShowInTaskbar="False"
+        Topmost="True"
+        ResizeMode="NoResize"
+        Focusable="True">
+    <!-- Alpha-1 background: fully transparent pixels on an AllowsTransparency window are
+         click-through at the Win32 layered-window level, so clicks outside the app would reach
+         the desktop instead of this overlay. Alpha 1 is invisible but hit-testable. -->
+    <Grid Background="#01000000" />
+</Window>
