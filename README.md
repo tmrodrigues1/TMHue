@@ -8,11 +8,12 @@ TMHue é um conta-gotas de cores para Windows. Capture, copie e guarde cores sem
 
 [Baixar o TMHue para Windows](https://github.com/tmrodrigues1/TMHue/releases/latest)
 
+> [!WARNING]
+> As releases ainda não possuem assinatura Authenticode. O Windows pode exibir um aviso do SmartScreen ao abrir o instalador. Baixe sempre pela página oficial de releases.
+
 ## Instalação
 
 Baixe o `Setup.exe` da [release mais recente](https://github.com/tmrodrigues1/TMHue/releases/latest). A instalação é feita por usuário, sem UAC, e o aplicativo verifica atualizações em segundo plano.
-
-Enquanto as releases não tiverem assinatura Authenticode, o Windows pode exibir um aviso do SmartScreen ao abrir o instalador. Baixe sempre pela página oficial de releases.
 
 ## Funcionalidades
 
