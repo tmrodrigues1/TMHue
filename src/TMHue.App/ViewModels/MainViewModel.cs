@@ -64,7 +64,7 @@ public sealed class MainViewModel : ViewModelBase
         });
         CopySwatchCommand = new RelayCommand<CapturedColor>(color =>
         {
-            if (color is not null) CopyWithToast(color.Hex);
+            if (color is not null) CopyWithToast(color.Hex, color.Hex);
         });
         TogglePinCommand = new RelayCommand<CapturedColor>(color =>
         {
@@ -174,10 +174,13 @@ public sealed class MainViewModel : ViewModelBase
         System.Windows.Application.Current.Dispatcher.Invoke(() => SetCurrent(_currentColor));
     }
 
-    private void CopyWithToast(string text)
+    /// <summary>Copies <paramref name="text"/> and confirms with a toast. <paramref name="swatchHex"/>
+    /// drives the toast's color dot; it must be the color actually copied — for a history swatch that
+    /// is the swatch's own hex, not the color shown on the main card.</summary>
+    private void CopyWithToast(string text, string? swatchHex = null)
     {
         if (_clipboard.TrySetText(text))
-            _notifications.ShowCaptureConfirmation(_currentColor.ToHex(), text);
+            _notifications.ShowCaptureConfirmation(swatchHex ?? _currentColor.ToHex(), text);
     }
 
     /// <summary>Recomputes all four format readouts for the given color against the current

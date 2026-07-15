@@ -30,10 +30,10 @@
          mechanism for this mixed WPF+WinForms shape, so the warning is a false positive here. -->
     <NoWarn>$(NoWarn);WFO0003</NoWarn>
 
-    <Version>1.0.0.0</Version>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <FileVersion>1.0.0.0</FileVersion>
-    <InformationalVersion>1.0.0</InformationalVersion>
+    <Version>1.0.1.0</Version>
+    <AssemblyVersion>1.0.1.0</AssemblyVersion>
+    <FileVersion>1.0.1.0</FileVersion>
+    <InformationalVersion>1.0.1</InformationalVersion>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <Product>TMHue</Product>
     <AssemblyTitle>TMHue</AssemblyTitle>

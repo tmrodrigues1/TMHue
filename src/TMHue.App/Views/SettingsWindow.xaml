@@ -206,7 +206,11 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
+                    <!-- TextWrapping + right margin: the status line ("Você já está na versão mais
+                         recente (vX.Y.Z).") is longer than the star column and would otherwise
+                         overflow under the button. -->
                     <TextBlock Grid.Column="0" Style="{StaticResource Text.Body}" VerticalAlignment="Center"
+                               TextWrapping="Wrap" Margin="0,0,12,0"
                                Foreground="{DynamicResource Brush.TextPrimary}">
                         <Run Text="Atualizações" /><LineBreak /><Run
                              Text="{Binding UpdateStatus, Mode=OneWay}"

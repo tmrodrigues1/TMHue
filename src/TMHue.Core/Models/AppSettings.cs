@@ -17,7 +17,7 @@ public sealed class AppSettings
     /// <summary>Side (in pixels) of the square region averaged into the captured/hovered color.
     /// 1 means the exact pixel under the cursor; 5 or 11 take the median of a small area, which
     /// is steadier against compression noise, anti-aliasing and gradients.</summary>
-    public int SampleAreaSize { get; set; } = 1;
+    public int SampleAreaSize { get; set; } = 5;
 
     public HotkeyDefinition Hotkey { get; set; } = HotkeyDefinition.Default;
 

@@ -47,6 +47,24 @@ public partial class MainWindow : Window
             _placementSaveTimer.Stop();
             _placementSaveTimer.Start();
         };
+
+        // SizeToContent + AllowsTransparency has a long-standing WPF bug: when the "Ver mais"
+        // sidebar flips from Collapsed to Visible, the window sometimes keeps its old width and
+        // the panel is rendered clipped outside it (intermittently, depending on render timing).
+        // Re-asserting SizeToContent after layout settles forces the window to re-measure, so the
+        // sidebar always shows.
+        viewModel.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName != nameof(MainViewModel.IsMorePanelOpen)) return;
+
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() =>
+            {
+                SizeToContent = SizeToContent.Manual;
+                InvalidateMeasure();
+                UpdateLayout();
+                SizeToContent = SizeToContent.WidthAndHeight;
+            }));
+        };
     }
 
     /// <summary>Called by the tray "Sair" menu item to allow the window to actually close.</summary>
