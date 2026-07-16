@@ -13,7 +13,10 @@ public enum UpdateCheckResult
     UpToDate,
     UpdateAvailable,
     NotInstalled,
-    Failed
+    Failed,
+
+    /// <summary>Verificação manual recusada: ainda não passaram 2 horas desde a última.</summary>
+    Throttled
 }
 
 /// <summary>
@@ -27,6 +30,7 @@ public sealed class UpdateService
 {
     private const string RepoUrl = "https://github.com/tmrodrigues1/TMHue";
     private static readonly TimeSpan AutoCheckInterval = TimeSpan.FromHours(24);
+    private static readonly TimeSpan ManualCheckInterval = TimeSpan.FromHours(2);
     private static readonly TimeSpan CheckTimeout = TimeSpan.FromSeconds(20);
 
     private readonly AppSettings _settings;
@@ -51,6 +55,10 @@ public sealed class UpdateService
 
     public bool IsInstalled => _manager.IsInstalled;
 
+    /// <summary>Versão da atualização pendente encontrada pela última checagem (ex.: "1.2.0"),
+    /// ou null se não há atualização aguardando consentimento do usuário.</summary>
+    public string? PendingVersion => _pendingUpdate?.TargetFullRelease.Version.ToString();
+
     public string CurrentVersionDisplay =>
         _manager.IsInstalled && _manager.CurrentVersion is not null
             ? _manager.CurrentVersion.ToString()
@@ -70,13 +78,39 @@ public sealed class UpdateService
         _ = CheckAsync(manual: false);
     }
 
-    /// <summary>Verificação manual (Configurações). Ignora o intervalo de 24 h.</summary>
+    /// <summary>Tempo restante até a próxima verificação manual permitida, ou null quando o
+    /// botão já pode ser usado. O carimbo é gravado apenas em verificações concluídas com
+    /// sucesso: uma falha de rede não pune o usuário com 2 horas de espera.</summary>
+    public TimeSpan? ManualCheckCooldownRemaining
+    {
+        get
+        {
+            var last = _settings.LastManualUpdateCheckUtc;
+            if (last is null) return null;
+            var remaining = ManualCheckInterval - (DateTime.UtcNow - last.Value);
+            return remaining > TimeSpan.Zero ? remaining : null;
+        }
+    }
+
+    /// <summary>Verificação manual (Configurações). Ignora o intervalo de 24 h da checagem
+    /// automática, mas respeita o intervalo mínimo de 2 h entre verificações manuais.</summary>
     public async Task<UpdateCheckResult> CheckManuallyAsync()
     {
         if (!_manager.IsInstalled)
             return UpdateCheckResult.NotInstalled;
 
-        return await CheckAsync(manual: true);
+        if (ManualCheckCooldownRemaining is not null)
+            return _pendingUpdate is null ? UpdateCheckResult.Throttled : UpdateCheckResult.UpdateAvailable;
+
+        var result = await CheckAsync(manual: true);
+
+        if (result is UpdateCheckResult.UpToDate or UpdateCheckResult.UpdateAvailable)
+        {
+            _settings.LastManualUpdateCheckUtc = DateTime.UtcNow;
+            TryPersistSettings();
+        }
+
+        return result;
     }
 
     private async Task<UpdateCheckResult> CheckAsync(bool manual)

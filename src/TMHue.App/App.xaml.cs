@@ -85,6 +85,8 @@ public partial class App : System.Windows.Application
         _mainWindow.SettingsRequested += (_, _) => OpenSettings();
         _mainWindow.ExitRequested += (_, _) => ExitApplication();
         _mainWindow.ContrastCheckerRequested += (_, _) => OpenContrastChecker();
+        _mainWindow.HarmonyRequested += (_, _) => OpenHarmonyGenerator();
+        _mainWindow.PaletteExtractorRequested += (_, _) => OpenPaletteExtractor();
 
         SetupTray();
         SetupHotkey();
@@ -233,6 +235,8 @@ public partial class App : System.Windows.Application
         _hotkeyService.TryRegister(HotkeyIds.Capture, _settings.Hotkey);
         _hotkeyService.TryRegister(HotkeyIds.OpenApp, _settings.OpenAppHotkey);
         _hotkeyService.TryRegister(HotkeyIds.OpenContrastChecker, _settings.ContrastCheckerHotkey);
+        _hotkeyService.TryRegister(HotkeyIds.OpenHarmony, _settings.HarmonyHotkey);
+        _hotkeyService.TryRegister(HotkeyIds.OpenPaletteExtractor, _settings.PaletteExtractorHotkey);
     }
 
     private void OnHotkeyPressed(object? sender, string id)
@@ -247,6 +251,12 @@ public partial class App : System.Windows.Application
                 break;
             case HotkeyIds.OpenContrastChecker:
                 OpenContrastChecker();
+                break;
+            case HotkeyIds.OpenHarmony:
+                OpenHarmonyGenerator();
+                break;
+            case HotkeyIds.OpenPaletteExtractor:
+                OpenPaletteExtractor();
                 break;
         }
     }
@@ -305,6 +315,7 @@ public partial class App : System.Windows.Application
         // capture/hover to recompute the main window's format readouts.
         var mainViewModel = _services!.GetRequiredService<MainViewModel>();
         mainViewModel.SetCurrent(mainViewModel.CurrentColor);
+        mainViewModel.RefreshHotkeyDisplays();
     }
 
     private void OpenContrastChecker()
@@ -317,6 +328,38 @@ public partial class App : System.Windows.Application
             viewModel.RefreshDefaultFormat();
         };
         window.ShowDialog();
+    }
+
+    private void OpenHarmonyGenerator()
+    {
+        var viewModel = new HarmonyViewModel(
+            _services!.GetRequiredService<ColorPickerCoordinator>(),
+            _services!.GetRequiredService<IClipboardService>(),
+            _services!.GetRequiredService<INotificationService>(),
+            () => _settings);
+        var window = new HarmonyWindow(viewModel) { Owner = _mainWindow };
+        window.ShowDialog();
+    }
+
+    // Non-modal (unlike the other tool windows): capturing a screen region requires hiding this
+    // window and its owner, and hiding a window shown via ShowDialog ends its modal session.
+    private PaletteExtractorWindow? _paletteExtractorWindow;
+
+    private void OpenPaletteExtractor()
+    {
+        if (_paletteExtractorWindow is not null)
+        {
+            _paletteExtractorWindow.Activate();
+            return;
+        }
+
+        var viewModel = new PaletteExtractorViewModel(
+            _services!.GetRequiredService<IClipboardService>(),
+            _services!.GetRequiredService<INotificationService>(),
+            () => _settings);
+        _paletteExtractorWindow = new PaletteExtractorWindow(viewModel) { Owner = _mainWindow };
+        _paletteExtractorWindow.Closed += (_, _) => _paletteExtractorWindow = null;
+        _paletteExtractorWindow.Show();
     }
 
     private void ExitApplication()

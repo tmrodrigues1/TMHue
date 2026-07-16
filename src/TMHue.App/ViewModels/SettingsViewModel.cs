@@ -10,7 +10,8 @@ namespace TMHue.App.ViewModels;
 /// </summary>
 public sealed class SettingsViewModel : ViewModelBase
 {
-    private const string CapturePromptText = "Pressione a combinação desejada (Esc para cancelar)...";
+    // Short enough to fit the hotkeys card's single-line rows without pushing the button.
+    private const string CapturePromptText = "Pressione a combinação…";
 
     private readonly AppSettings _settings;
     private readonly ISettingsRepository _repository;
@@ -34,8 +35,23 @@ public sealed class SettingsViewModel : ViewModelBase
         _startupService = startupService;
         _hotkeyService = hotkeyService;
         _updateService = updateService;
-        _updateStatus = $"Versão atual: {_updateService.CurrentVersionDisplay}";
+        _updateStatus = _updateService.ManualCheckCooldownRemaining is { } remaining
+            ? $"Versão atual: {_updateService.CurrentVersionDisplay} · {FormatCooldown(remaining)}"
+            : $"Versão atual: {_updateService.CurrentVersionDisplay}";
     }
+
+    /// <summary>Mensagem curta de espera do botão "Verificar" (limite de uma verificação
+    /// manual a cada 2 horas). Arredonda para cima para nunca prometer menos tempo que o real.</summary>
+    private static string FormatCooldown(TimeSpan remaining)
+    {
+        var minutes = (int)Math.Ceiling(remaining.TotalMinutes);
+        var text = minutes >= 60 ? $"{minutes / 60} h {minutes % 60:00} min" : $"{minutes} min";
+        return $"Nova verificação em {text}.";
+    }
+
+    /// <summary>Exposed so the window can hand the service to the update-progress modal after
+    /// the user consents.</summary>
+    public UpdateService UpdateService => _updateService;
 
     public string UpdateStatus
     {
@@ -43,25 +59,69 @@ public sealed class SettingsViewModel : ViewModelBase
         private set { _updateStatus = value; OnPropertyChanged(); }
     }
 
-    public bool CanCheckForUpdates => !_checkingForUpdates;
+    // Desabilita o botão durante a checagem e durante o intervalo mínimo de 2 h entre
+    // verificações manuais (o tempo restante aparece no texto de status ao lado).
+    public bool CanCheckForUpdates => !_checkingForUpdates && _updateService.ManualCheckCooldownRemaining is null;
+
+    private string? _availableVersion;
+
+    /// <summary>Versão aguardando o consentimento do usuário, ou null quando não há atualização
+    /// pendente. A atualização nunca começa sozinha: só após o clique em "Atualizar".</summary>
+    public string? AvailableVersion
+    {
+        get => _availableVersion;
+        private set
+        {
+            _availableVersion = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsUpdateAvailable));
+        }
+    }
+
+    public bool IsUpdateAvailable => AvailableVersion is not null;
+
+    /// <summary>Adia a atualização pendente. O pacote continua conhecido pelo UpdateService;
+    /// uma nova checagem (ou o próximo ciclo automático) oferece a mesma versão de novo.</summary>
+    public void DeclineUpdate()
+    {
+        AvailableVersion = null;
+        UpdateStatus = "Atualização adiada.";
+    }
+
+    /// <summary>Chamado pela janela quando o download/aplicação falha (em sucesso o app
+    /// reinicia e nunca chegamos aqui). Mantém a oferta visível para tentar de novo.</summary>
+    public void ReportUpdateFailed() => UpdateStatus = "Falha ao atualizar. Tente novamente.";
 
     /// <summary>Verificação manual disparada pelo botão em Configurações; ignora o
-    /// intervalo de 24 h da checagem automática.</summary>
+    /// intervalo de 24 h da checagem automática. Mensagens curtas: o card tem uma linha.</summary>
     public async Task CheckForUpdatesAsync()
     {
         if (_checkingForUpdates) return;
         _checkingForUpdates = true;
         OnPropertyChanged(nameof(CanCheckForUpdates));
-        UpdateStatus = "Verificando atualizações…";
+        UpdateStatus = "Verificando…";
 
         var result = await _updateService.CheckManuallyAsync();
-        UpdateStatus = result switch
+        if (result == UpdateCheckResult.UpdateAvailable)
         {
-            UpdateCheckResult.UpToDate => $"Você já está na versão mais recente ({_updateService.CurrentVersionDisplay}).",
-            UpdateCheckResult.UpdateAvailable => "Nova versão disponível — use o aviso para atualizar.",
-            UpdateCheckResult.NotInstalled => "Atualizações automáticas ficam disponíveis na versão instalada pelo Setup.",
-            _ => "Não foi possível verificar agora. Tente novamente mais tarde."
-        };
+            AvailableVersion = _updateService.PendingVersion;
+            UpdateStatus = $"Nova versão disponível: {AvailableVersion}";
+        }
+        else
+        {
+            AvailableVersion = null;
+            UpdateStatus = result switch
+            {
+                UpdateCheckResult.UpToDate when _updateService.ManualCheckCooldownRemaining is { } remaining =>
+                    $"Você está atualizado. {FormatCooldown(remaining)}",
+                UpdateCheckResult.UpToDate => "Você está atualizado.",
+                UpdateCheckResult.Throttled when _updateService.ManualCheckCooldownRemaining is { } remaining =>
+                    FormatCooldown(remaining),
+                UpdateCheckResult.Throttled => "Aguarde para verificar novamente.",
+                UpdateCheckResult.NotInstalled => "Disponível apenas na versão instalada.",
+                _ => "Não foi possível verificar."
+            };
+        }
 
         _checkingForUpdates = false;
         OnPropertyChanged(nameof(CanCheckForUpdates));
@@ -102,11 +162,13 @@ public sealed class SettingsViewModel : ViewModelBase
     /// <summary>Sample area sizes backing <see cref="SampleAreaOptions"/>, in display order.</summary>
     private static readonly int[] SampleAreaSizes = { 1, 5, 11 };
 
-    /// <summary>Dropdown labels for the sample-area ComboBox, in the same order as <see cref="SampleAreaSizes"/>.</summary>
+    /// <summary>Dropdown labels for the sample-area ComboBox, in the same order as <see cref="SampleAreaSizes"/>.
+    /// Short on purpose: the combo now shares a card row with the copy-format combo (~150px each),
+    /// so anything longer gets clipped; the "recomendado" guidance lives in the card's tooltip.</summary>
     public IReadOnlyList<string> SampleAreaOptions { get; } = new[]
     {
         "Pixel exato",
-        "Média 5×5 (recomendado)",
+        "Média 5×5",
         "Média 11×11"
     };
 
@@ -130,9 +192,9 @@ public sealed class SettingsViewModel : ViewModelBase
     /// 1/2/3 shortcuts while the eyedropper is active, without changing this default.</summary>
     public IReadOnlyList<string> CopyFormatOptions { get; } = new[]
     {
-        "HEX (#RRGGBB)",
-        "RGB (rgb(r, g, b))",
-        "HSL (hsl(h, s%, l%))"
+        "HEX",
+        "RGB",
+        "HSL"
     };
 
     public int SelectedCopyFormatIndex
@@ -171,6 +233,14 @@ public sealed class SettingsViewModel : ViewModelBase
         ? CapturePromptText
         : _settings.ContrastCheckerHotkey.ToString();
 
+    public string HarmonyHotkeyDisplay => CapturingHotkeyId == HotkeyIds.OpenHarmony
+        ? CapturePromptText
+        : _settings.HarmonyHotkey.ToString();
+
+    public string PaletteExtractorHotkeyDisplay => CapturingHotkeyId == HotkeyIds.OpenPaletteExtractor
+        ? CapturePromptText
+        : _settings.PaletteExtractorHotkey.ToString();
+
     public void BeginCaptureHotkey(string hotkeyId)
     {
         HotkeyError = null;
@@ -194,6 +264,8 @@ public sealed class SettingsViewModel : ViewModelBase
         {
             HotkeyIds.Capture => _settings.Hotkey,
             HotkeyIds.OpenApp => _settings.OpenAppHotkey,
+            HotkeyIds.OpenHarmony => _settings.HarmonyHotkey,
+            HotkeyIds.OpenPaletteExtractor => _settings.PaletteExtractorHotkey,
             _ => _settings.ContrastCheckerHotkey
         };
 
@@ -215,6 +287,12 @@ public sealed class SettingsViewModel : ViewModelBase
             case HotkeyIds.OpenApp:
                 _settings.OpenAppHotkey = candidate;
                 break;
+            case HotkeyIds.OpenHarmony:
+                _settings.HarmonyHotkey = candidate;
+                break;
+            case HotkeyIds.OpenPaletteExtractor:
+                _settings.PaletteExtractorHotkey = candidate;
+                break;
             default:
                 _settings.ContrastCheckerHotkey = candidate;
                 break;
@@ -233,6 +311,8 @@ public sealed class SettingsViewModel : ViewModelBase
         OnPropertyChanged(nameof(CaptureHotkeyDisplay));
         OnPropertyChanged(nameof(OpenAppHotkeyDisplay));
         OnPropertyChanged(nameof(ContrastCheckerHotkeyDisplay));
+        OnPropertyChanged(nameof(HarmonyHotkeyDisplay));
+        OnPropertyChanged(nameof(PaletteExtractorHotkeyDisplay));
     }
 
     private void Persist() => _repository.Save(_settings);

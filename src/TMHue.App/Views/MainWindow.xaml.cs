@@ -21,6 +21,8 @@ public partial class MainWindow : Window
     public event EventHandler? SettingsRequested;
     public event EventHandler? ExitRequested;
     public event EventHandler? ContrastCheckerRequested;
+    public event EventHandler? HarmonyRequested;
+    public event EventHandler? PaletteExtractorRequested;
 
     public MainWindow(MainViewModel viewModel, ISettingsRepository settingsRepository, AppSettings settings)
     {
@@ -135,6 +137,10 @@ public partial class MainWindow : Window
     private void OnSettingsClick(object sender, RoutedEventArgs e) => SettingsRequested?.Invoke(this, EventArgs.Empty);
 
     private void OnContrastCheckerClick(object sender, RoutedEventArgs e) => ContrastCheckerRequested?.Invoke(this, EventArgs.Empty);
+
+    private void OnHarmonyClick(object sender, RoutedEventArgs e) => HarmonyRequested?.Invoke(this, EventArgs.Empty);
+
+    private void OnPaletteExtractorClick(object sender, RoutedEventArgs e) => PaletteExtractorRequested?.Invoke(this, EventArgs.Empty);
 
     private void OnAuthorLinkClick(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
     {

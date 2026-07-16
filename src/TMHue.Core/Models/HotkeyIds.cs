@@ -7,6 +7,8 @@ public static class HotkeyIds
     public const string Capture = "capture";
     public const string OpenApp = "open-app";
     public const string OpenContrastChecker = "open-contrast-checker";
+    public const string OpenHarmony = "open-harmony";
+    public const string OpenPaletteExtractor = "open-palette-extractor";
 
     /// <summary>Bare Esc, registered only for the duration of a picking session so cancel works
     /// even if the overlay loses keyboard focus.</summary>

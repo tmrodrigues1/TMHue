@@ -27,10 +27,22 @@ public sealed class AppSettings
     /// initializer below supplies the default for those legacy files automatically on load.</summary>
     public HotkeyDefinition ContrastCheckerHotkey { get; set; } = HotkeyDefinition.DefaultOpenContrastChecker;
 
+    /// <summary>Same legacy-file rationale as <see cref="ContrastCheckerHotkey"/>.</summary>
+    public HotkeyDefinition HarmonyHotkey { get; set; } = HotkeyDefinition.DefaultOpenHarmony;
+
+    /// <summary>Same legacy-file rationale as <see cref="ContrastCheckerHotkey"/>.</summary>
+    public HotkeyDefinition PaletteExtractorHotkey { get; set; } = HotkeyDefinition.DefaultOpenPaletteExtractor;
+
     /// <summary>Última checagem automática de atualização bem-sucedida (UTC). A checagem em
     /// segundo plano roda no máximo uma vez a cada 24 horas; a verificação manual em
     /// Configurações ignora este carimbo.</summary>
     public DateTime? LastUpdateCheckUtc { get; set; }
+
+    /// <summary>Última verificação manual concluída pelo botão "Verificar" em Configurações
+    /// (UTC). O botão respeita um intervalo mínimo de 2 horas entre verificações, para não
+    /// gerar tráfego desnecessário contra a GitHub; persistido para o limite sobreviver a
+    /// reinícios do app.</summary>
+    public DateTime? LastManualUpdateCheckUtc { get; set; }
 
     public double? WindowLeft { get; set; }
 

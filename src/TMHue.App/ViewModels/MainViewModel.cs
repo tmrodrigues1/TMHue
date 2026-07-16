@@ -138,6 +138,19 @@ public sealed class MainViewModel : ViewModelBase
     public string HotkeyDisplay => _settingsAccessor().Hotkey.ToString();
     public string OpenAppHotkeyDisplay => _settingsAccessor().OpenAppHotkey.ToString();
     public string ContrastCheckerHotkeyDisplay => _settingsAccessor().ContrastCheckerHotkey.ToString();
+    public string HarmonyHotkeyDisplay => _settingsAccessor().HarmonyHotkey.ToString();
+    public string PaletteExtractorHotkeyDisplay => _settingsAccessor().PaletteExtractorHotkey.ToString();
+
+    /// <summary>Called after Configurações closes so the footer's hotkey tooltip reflects any
+    /// rebound combination — the display properties are plain getters and never self-notify.</summary>
+    public void RefreshHotkeyDisplays()
+    {
+        OnPropertyChanged(nameof(HotkeyDisplay));
+        OnPropertyChanged(nameof(OpenAppHotkeyDisplay));
+        OnPropertyChanged(nameof(ContrastCheckerHotkeyDisplay));
+        OnPropertyChanged(nameof(HarmonyHotkeyDisplay));
+        OnPropertyChanged(nameof(PaletteExtractorHotkeyDisplay));
+    }
 
     /// <summary>Reads the real build version from the assembly (driven by &lt;Version&gt; in
     /// TMHue.App.csproj) instead of a hardcoded label, so the footer never drifts out of sync

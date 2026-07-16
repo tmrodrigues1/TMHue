@@ -18,6 +18,14 @@ public readonly record struct RgbColor(byte Red, byte Green, byte Blue)
     /// <summary>Standard HSL conversion (hue in degrees, saturation/lightness as percentages).</summary>
     public string ToHslString()
     {
+        var (hue, saturation, lightness) = ToHsl();
+        return $"hsl({Math.Round(hue)}, {Math.Round(saturation * 100)}%, {Math.Round(lightness * 100)}%)";
+    }
+
+    /// <summary>Structured HSL components (hue 0-360, saturation/lightness 0-1), for callers that
+    /// need to do color math (e.g. harmony generation) rather than display a formatted string.</summary>
+    public (double Hue, double Saturation, double Lightness) ToHsl()
+    {
         var r = Red / 255.0;
         var g = Green / 255.0;
         var b = Blue / 255.0;
@@ -45,7 +53,7 @@ public readonly record struct RgbColor(byte Red, byte Green, byte Blue)
             if (hue < 0) hue += 360;
         }
 
-        return $"hsl({Math.Round(hue)}, {Math.Round(saturation * 100)}%, {Math.Round(lightness * 100)}%)";
+        return (hue, saturation, lightness);
     }
 
     public string Format(CopyFormat format, bool uppercaseHex = true) => format switch
@@ -126,7 +134,7 @@ public readonly record struct RgbColor(byte Red, byte Green, byte Blue)
         return true;
     }
 
-    private static RgbColor FromHsl(double hue, double saturation, double lightness)
+    public static RgbColor FromHsl(double hue, double saturation, double lightness)
     {
         hue = ((hue % 360) + 360) % 360;
 

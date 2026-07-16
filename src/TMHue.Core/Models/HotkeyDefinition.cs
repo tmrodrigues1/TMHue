@@ -25,6 +25,18 @@ public sealed class HotkeyDefinition
         Key = "K"
     };
 
+    public static HotkeyDefinition DefaultOpenHarmony => new()
+    {
+        Modifiers = new List<string> { "Control", "Alt" },
+        Key = "H"
+    };
+
+    public static HotkeyDefinition DefaultOpenPaletteExtractor => new()
+    {
+        Modifiers = new List<string> { "Control", "Alt" },
+        Key = "P"
+    };
+
     public override string ToString() =>
         string.Join(" + ", Modifiers.Select(m => m == "Control" ? "CTRL" : m).Append(Key));
 }

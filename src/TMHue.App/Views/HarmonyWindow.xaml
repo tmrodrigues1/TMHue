@@ -1,0 +1,210 @@
+<Window x:Class="TMHue.App.Views.HarmonyWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:conv="clr-namespace:TMHue.App.Converters"
+        Title="Harmonias de cor — TMHue"
+        Width="400"
+        SizeToContent="Height"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize">
+
+    <Window.Resources>
+        <conv:StringToVisibilityConverter x:Key="StringToVisibility" />
+
+        <!-- Same rounded/sunken input language as the contrast checker's hex box. -->
+        <Style x:Key="Input.Hex" TargetType="TextBox">
+            <Setter Property="Background" Value="{DynamicResource Brush.SurfaceSunken}" />
+            <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+            <Setter Property="CaretBrush" Value="{DynamicResource Brush.TextPrimary}" />
+            <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Padding" Value="9,5" />
+            <Setter Property="BorderBrush" Value="{DynamicResource Brush.BorderStrong}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="9">
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border Background="{DynamicResource Brush.Surface}"
+            BorderBrush="{DynamicResource Brush.Border}"
+            BorderThickness="1"
+            CornerRadius="18"
+            Effect="{DynamicResource Shadow.Window}"
+            Margin="14">
+
+        <Grid Margin="22,10,22,22">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Title bar, same proportions as the other modals. -->
+            <Grid Grid.Row="0" MouseLeftButtonDown="OnTitleBarDrag" Background="Transparent" Height="38">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Grid instead of a horizontal StackPanel: a StackPanel measures at infinite
+                     width and would overflow its star column under the help icon. -->
+                <Grid Grid.Column="0" VerticalAlignment="Center">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Background="{DynamicResource Brush.SurfaceSunken}"
+                            BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
+                            CornerRadius="9" Width="28" Height="28">
+                        <TextBlock Text="&#xE790;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                   Foreground="{DynamicResource Brush.HotkeyText}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0">
+                        <TextBlock Text="Harmonias de cor" Style="{StaticResource Text.Title}" FontSize="15" />
+                        <TextBlock Text="Sugestões a partir de uma cor base" Style="{StaticResource Text.Caption}"
+                                   FontSize="12" Foreground="{DynamicResource Brush.TextSecondary}"
+                                   TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- Discreet help icon: explains the feature without cluttering the layout. -->
+                <TextBlock Grid.Column="1" Text="&#xE9CE;" FontFamily="Segoe MDL2 Assets" FontSize="15"
+                           Foreground="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center"
+                           Margin="0,0,10,0" Cursor="Help"
+                           ToolTipService.InitialShowDelay="0" ToolTipService.ShowDuration="60000">
+                    <TextBlock.ToolTip>
+                        <ToolTip>
+                            <StackPanel MaxWidth="260">
+                                <TextBlock TextWrapping="Wrap" LineHeight="17">
+                                    <Run Text="Escolheu uma cor e não sabe quais combinam com ela?"
+                                         FontWeight="SemiBold" Foreground="{DynamicResource Brush.HotkeyText}" /><Run
+                                         Text=" É exatamente isso que esta ferramenta resolve: informe uma cor e o TMHue sugere paletas prontas que combinam entre si." />
+                                </TextBlock>
+                                <TextBlock TextWrapping="Wrap" LineHeight="17" Margin="0,8,0,0">
+                                    <Run Text="Como usar:" FontWeight="SemiBold"
+                                         Foreground="{DynamicResource Brush.HotkeyText}" /><Run
+                                         Text=" digite a cor no campo abaixo ou clique no quadradinho colorido para capturá-la de qualquer lugar da tela com o conta-gotas." />
+                                </TextBlock>
+                                <TextBlock TextWrapping="Wrap" LineHeight="17" Margin="0,8,0,0">
+                                    <Run Text="Cada seção é um estilo de combinação — passe o mouse no " /><Run
+                                         Text="?" FontWeight="SemiBold" Foreground="{DynamicResource Brush.HotkeyText}" /><Run
+                                         Text=" de cada uma para entender quando usá-la. Clique em qualquer cor para copiá-la." />
+                                </TextBlock>
+                                <TextBlock TextWrapping="Wrap" LineHeight="17" Margin="0,8,0,0">
+                                    <Run Text="Ideal para montar a identidade visual de um site, apresentação ou design sem depender do olho." />
+                                </TextBlock>
+                            </StackPanel>
+                        </ToolTip>
+                    </TextBlock.ToolTip>
+                </TextBlock>
+
+                <Button Grid.Column="2" Style="{StaticResource Button.Close}" Content="&#xE8BB;"
+                        FontFamily="Segoe MDL2 Assets" FontSize="10" Width="30" Height="30"
+                        Click="OnCloseClick" ToolTip="Fechar" />
+            </Grid>
+
+            <!-- Base color card -->
+            <Border Grid.Row="1" Background="{DynamicResource Brush.SurfaceElevated}"
+                    BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
+                    CornerRadius="14" Padding="14,10" Margin="0,12,0,0">
+                <StackPanel>
+                    <TextBlock Text="Cor base" Style="{StaticResource Text.Caption}" FontSize="11"
+                               Foreground="White" Margin="0,0,0,4" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Width="24" Height="24" CornerRadius="7"
+                                BorderBrush="{DynamicResource Brush.BorderStrong}" BorderThickness="1"
+                                Background="{Binding BaseBrush}" Margin="0,0,6,0" Cursor="Hand"
+                                ToolTip="Capturar a cor base com o conta-gotas (com mini zoom)">
+                            <Border.InputBindings>
+                                <MouseBinding MouseAction="LeftClick" Command="{Binding PickBaseColorCommand}" />
+                            </Border.InputBindings>
+                        </Border>
+                        <TextBox Grid.Column="1" Style="{StaticResource Input.Hex}" MaxLength="21"
+                                 Text="{Binding BaseHex, UpdateSourceTrigger=PropertyChanged}" />
+                    </Grid>
+
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="IndianRed" FontSize="12"
+                               TextWrapping="Wrap" Margin="0,8,0,0"
+                               Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibility}}" />
+                </StackPanel>
+            </Border>
+
+            <!-- Harmony groups card -->
+            <Border Grid.Row="2" Background="{DynamicResource Brush.SurfaceElevated}"
+                    BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
+                    CornerRadius="14" Padding="14,10" Margin="0,14,0,0">
+                <ItemsControl ItemsSource="{Binding Groups}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="0,4,0,6">
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                    <TextBlock Text="{Binding Title}" Style="{StaticResource Text.Title}"
+                                               FontSize="12" VerticalAlignment="Center" />
+                                    <TextBlock Text="&#xE9CE;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                               Foreground="{DynamicResource Brush.TextSecondary}"
+                                               VerticalAlignment="Center" Margin="6,0,0,0" Cursor="Help"
+                                               ToolTipService.InitialShowDelay="0" ToolTipService.ShowDuration="60000">
+                                        <TextBlock.ToolTip>
+                                            <ToolTip>
+                                                <TextBlock Text="{Binding Description}" TextWrapping="Wrap"
+                                                           LineHeight="17" MaxWidth="250" />
+                                            </ToolTip>
+                                        </TextBlock.ToolTip>
+                                    </TextBlock>
+                                </StackPanel>
+                                <ItemsControl ItemsSource="{Binding Swatches}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <UniformGrid Rows="1" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Margin="0,0,8,0">
+                                                <Border Style="{StaticResource Swatch.History}" Width="Auto" Height="32"
+                                                        CornerRadius="8" Background="{Binding Brush}"
+                                                        ToolTip="{Binding Value, StringFormat='Clique para copiar {0}'}">
+                                                    <Border.InputBindings>
+                                                        <MouseBinding MouseAction="LeftClick"
+                                                                      Command="{Binding DataContext.CopySwatchCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                      CommandParameter="{Binding}" />
+                                                    </Border.InputBindings>
+                                                </Border>
+                                                <TextBlock Text="{Binding Value}" FontFamily="{StaticResource Font.Mono}"
+                                                           FontSize="9" Foreground="{DynamicResource Brush.TextSecondary}"
+                                                           HorizontalAlignment="Center" Margin="0,3,0,0"
+                                                           TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Border>
+
+        </Grid>
+    </Border>
+</Window>

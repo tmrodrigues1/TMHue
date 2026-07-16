@@ -29,6 +29,18 @@ public sealed class StringToHiddenVisibilityConverter : IValueConverter
         throw new NotSupportedException();
 }
 
+/// <summary>Collapses a bound element when the source boolean is true — the complement of the
+/// stock BooleanToVisibilityConverter, for mutually exclusive UI states (e.g. the "Verificar"
+/// button hiding while the update consent buttons are shown).</summary>
+public sealed class InverseBooleanToVisibilityConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        value is true ? Visibility.Collapsed : Visibility.Visible;
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
 /// <summary>Renders a WCAG pass/fail boolean as short Portuguese labels for the contrast checker.</summary>
 public sealed class PassFailToTextConverter : IValueConverter
 {

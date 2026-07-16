@@ -1,6 +1,9 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
+    <!-- Fluent-style eyedropper path, shared by every window that offers a capture action. -->
+    <Geometry x:Key="Geometry.Eyedropper">M21.6,2.4 A3.4,3.4 0 0 0 16.8,2.4 L14,5.2 12.7,3.9 A1,1 0 1 0 11.3,5.3 L11.95,5.95 4,13.9 A2,2 0 0 0 3.45,14.93 L2.6,19.2 A1,1 0 0 0 3.8,20.4 L8.07,19.55 A2,2 0 0 0 9.1,19 L17.05,11.05 17.7,11.7 A1,1 0 0 0 19.1,10.3 L17.8,9 20.6,6.2 A3.4,3.4 0 0 0 21.6,2.4 Z M8.7,17.6 5.3,18.28 5.98,14.88 13.58,7.28 16.3,10 Z</Geometry>
+
     <!-- Primary call-to-action button: solid accent fill, gentle hover/press states. -->
     <Style x:Key="Button.Primary" TargetType="Button">
         <Setter Property="Background" Value="{DynamicResource Brush.Accent}" />

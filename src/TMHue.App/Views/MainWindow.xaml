@@ -41,6 +41,7 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <!-- Title bar: app icon + name on the left, window controls on the right -->
@@ -164,8 +165,36 @@
                 </Button>
             </Grid>
 
+            <!-- Harmony generator + palette extractor: second row of tools, same visual weight. -->
+            <Grid Grid.Row="3" Margin="0,14,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="0" Style="{StaticResource Button.Capture}" FontSize="13" Height="48"
+                        Click="OnHarmonyClick" HorizontalAlignment="Stretch" Margin="0,0,7,0"
+                        ToolTip="Gerar harmonias de cor a partir de uma cor base">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE790;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                   Foreground="White" VerticalAlignment="Center" />
+                        <TextBlock Text="Gerar Harmonias" VerticalAlignment="Center" Margin="8,0,0,0" />
+                    </StackPanel>
+                </Button>
+
+                <Button Grid.Column="1" Style="{StaticResource Button.Capture}" FontSize="13" Height="48"
+                        Click="OnPaletteExtractorClick" HorizontalAlignment="Stretch" Margin="7,0,0,0"
+                        ToolTip="Extrair a paleta de cores de uma imagem ou de uma região da tela">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE722;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                   Foreground="White" VerticalAlignment="Center" />
+                        <TextBlock Text="Extrair Paletas" VerticalAlignment="Center" Margin="8,0,0,0" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+
             <!-- History -->
-            <StackPanel Grid.Row="3" Margin="0,22,0,0">
+            <StackPanel Grid.Row="4" Margin="0,22,0,0">
                 <Grid Margin="2,0,0,8">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -248,58 +277,88 @@
                 </ItemsControl>
             </StackPanel>
 
-            <!-- Footer: hotkeys on the left, settings pill on the right -->
-            <Grid Grid.Row="4" Margin="0,22,0,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
+            <!-- Footer: three evenly spaced action pills — hotkey reference (read-only tooltip),
+                 clear history, and settings. The hotkey list moved out of the always-visible
+                 footer into the keyboard pill's tooltip to keep the card compact. -->
+            <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,22,0,0">
+                <Button Style="{StaticResource Button.SettingsPill}" Padding="10" Margin="0,0,10,0"
+                        Cursor="Help" Focusable="False" IsHitTestVisible="True"
+                        ToolTipService.InitialShowDelay="0" ToolTipService.ShowDuration="60000">
+                    <TextBlock Text="&#xE765;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                               Foreground="{DynamicResource Brush.TextSecondary}" />
+                    <Button.ToolTip>
+                        <ToolTip>
+                            <StackPanel MinWidth="210">
+                                <TextBlock Text="Atalhos do teclado" FontWeight="SemiBold" FontSize="12"
+                                           Foreground="{DynamicResource Brush.TextPrimary}" Margin="0,0,0,8" />
 
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Border Background="{DynamicResource Brush.SurfaceSunken}"
-                            BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
-                            CornerRadius="9" Width="30" Height="30">
-                        <TextBlock Text="&#xE765;" FontFamily="Segoe MDL2 Assets" FontSize="14"
-                                   Foreground="{DynamicResource Brush.TextSecondary}"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    </Border>
-                    <StackPanel VerticalAlignment="Center" Margin="12,0,0,0">
-                        <TextBlock FontSize="12" FontFamily="{StaticResource Font.Text}">
-                            <Run Text="Copiar cor: " Foreground="{DynamicResource Brush.TextSecondary}" /><Run
-                                 Text="{Binding HotkeyDisplay, Mode=OneWay}"
-                                 Foreground="{DynamicResource Brush.HotkeyText}" FontWeight="SemiBold" />
-                        </TextBlock>
-                        <TextBlock FontSize="12" FontFamily="{StaticResource Font.Text}" Margin="0,2,0,0">
-                            <Run Text="Abrir app: " Foreground="{DynamicResource Brush.TextSecondary}" /><Run
-                                 Text="{Binding OpenAppHotkeyDisplay, Mode=OneWay}"
-                                 Foreground="{DynamicResource Brush.HotkeyText}" FontWeight="SemiBold" />
-                        </TextBlock>
-                        <TextBlock FontSize="12" FontFamily="{StaticResource Font.Text}" Margin="0,2,0,0">
-                            <Run Text="Abrir contraste: " Foreground="{DynamicResource Brush.TextSecondary}" /><Run
-                                 Text="{Binding ContrastCheckerHotkeyDisplay, Mode=OneWay}"
-                                 Foreground="{DynamicResource Brush.HotkeyText}" FontWeight="SemiBold" />
-                        </TextBlock>
-                    </StackPanel>
-                </StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition /><RowDefinition /><RowDefinition />
+                                        <RowDefinition /><RowDefinition />
+                                    </Grid.RowDefinitions>
 
-                <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <Button Style="{StaticResource Button.SettingsPill}"
-                            Padding="10" Margin="0,0,8,0"
-                            Command="{Binding ClearHistoryCommand}" ToolTip="Limpar todas as cores">
-                        <TextBlock Text="&#xE75C;" FontFamily="Segoe MDL2 Assets" FontSize="14"
-                                   Foreground="{DynamicResource Brush.TextSecondary}" />
-                    </Button>
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Copiar cor" FontSize="12"
+                                               Foreground="{DynamicResource Brush.TextSecondary}" Margin="0,0,16,4" />
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding HotkeyDisplay, Mode=OneWay}"
+                                               FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource Brush.HotkeyText}" Margin="0,0,0,4" />
 
-                    <Button Style="{StaticResource Button.SettingsPill}" Click="OnSettingsClick"
-                            Padding="10" ToolTip="Configurações">
-                        <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="14"
-                                   Foreground="{DynamicResource Brush.TextSecondary}" />
-                    </Button>
-                </StackPanel>
-            </Grid>
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Abrir aplicativo" FontSize="12"
+                                               Foreground="{DynamicResource Brush.TextSecondary}" Margin="0,0,16,4" />
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding OpenAppHotkeyDisplay, Mode=OneWay}"
+                                               FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource Brush.HotkeyText}" Margin="0,0,0,4" />
+
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Contraste (WCAG)" FontSize="12"
+                                               Foreground="{DynamicResource Brush.TextSecondary}" Margin="0,0,16,4" />
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding ContrastCheckerHotkeyDisplay, Mode=OneWay}"
+                                               FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource Brush.HotkeyText}" Margin="0,0,0,4" />
+
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Harmonias de cor" FontSize="12"
+                                               Foreground="{DynamicResource Brush.TextSecondary}" Margin="0,0,16,4" />
+                                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding HarmonyHotkeyDisplay, Mode=OneWay}"
+                                               FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource Brush.HotkeyText}" Margin="0,0,0,4" />
+
+                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Extrair paleta" FontSize="12"
+                                               Foreground="{DynamicResource Brush.TextSecondary}" Margin="0,0,16,0" />
+                                    <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding PaletteExtractorHotkeyDisplay, Mode=OneWay}"
+                                               FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource Brush.HotkeyText}" />
+                                </Grid>
+
+                                <TextBlock TextWrapping="Wrap" LineHeight="16" FontSize="11" Margin="0,10,0,0"
+                                           Foreground="{DynamicResource Brush.TextSecondary}">
+                                    <Run Text="Para alterar um atalho, acesse " /><Run Text="Configurações"
+                                         FontWeight="SemiBold" Foreground="{DynamicResource Brush.HotkeyText}" />.
+                                </TextBlock>
+                            </StackPanel>
+                        </ToolTip>
+                    </Button.ToolTip>
+                </Button>
+
+                <Button Style="{StaticResource Button.SettingsPill}"
+                        Padding="10" Margin="0,0,10,0"
+                        Command="{Binding ClearHistoryCommand}" ToolTip="Limpar todas as cores">
+                    <TextBlock Text="&#xE75C;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                               Foreground="{DynamicResource Brush.TextSecondary}" />
+                </Button>
+
+                <Button Style="{StaticResource Button.SettingsPill}" Click="OnSettingsClick"
+                        Padding="10" ToolTip="Configurações">
+                    <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                               Foreground="{DynamicResource Brush.TextSecondary}" />
+                </Button>
+            </StackPanel>
 
             <!-- Version / author line -->
-            <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,22,0,0">
+            <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,22,0,0">
                 <TextBlock Text="{Binding VersionDisplay, Mode=OneWay}" Style="{StaticResource Text.Caption}" FontSize="11" />
                 <TextBlock Text=" · " Style="{StaticResource Text.Caption}" FontSize="11" />
                 <TextBlock Style="{StaticResource Text.Caption}" FontSize="11">
