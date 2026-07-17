@@ -54,10 +54,6 @@ public sealed class SettingsViewModel : ViewModelBase
         return LocalizationService.Format("L.Settings.CooldownFmt", text);
     }
 
-    /// <summary>Exposed so the window can hand the service to the update-progress modal after
-    /// the user consents.</summary>
-    public UpdateService UpdateService => _updateService;
-
     public string UpdateStatus
     {
         get => _updateStatus;
@@ -67,35 +63,6 @@ public sealed class SettingsViewModel : ViewModelBase
     // Desabilita o botão durante a checagem e durante o intervalo mínimo de 2 h entre
     // verificações manuais (o tempo restante aparece no texto de status ao lado).
     public bool CanCheckForUpdates => !_checkingForUpdates && _updateService.ManualCheckCooldownRemaining is null;
-
-    private string? _availableVersion;
-
-    /// <summary>Versão aguardando o consentimento do usuário, ou null quando não há atualização
-    /// pendente. A atualização nunca começa sozinha: só após o clique em "Atualizar".</summary>
-    public string? AvailableVersion
-    {
-        get => _availableVersion;
-        private set
-        {
-            _availableVersion = value;
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(IsUpdateAvailable));
-        }
-    }
-
-    public bool IsUpdateAvailable => AvailableVersion is not null;
-
-    /// <summary>Adia a atualização pendente. O pacote continua conhecido pelo UpdateService;
-    /// uma nova checagem (ou o próximo ciclo automático) oferece a mesma versão de novo.</summary>
-    public void DeclineUpdate()
-    {
-        AvailableVersion = null;
-        UpdateStatus = LocalizationService.Get("L.Settings.UpdateDeferred");
-    }
-
-    /// <summary>Chamado pela janela quando o download/aplicação falha (em sucesso o app
-    /// reinicia e nunca chegamos aqui). Mantém a oferta visível para tentar de novo.</summary>
-    public void ReportUpdateFailed() => UpdateStatus = LocalizationService.Get("L.Settings.UpdateFailed");
 
     /// <summary>Verificação manual disparada pelo botão em Configurações; ignora o
     /// intervalo de 24 h da checagem automática. Mensagens curtas: o card tem uma linha.</summary>
@@ -109,12 +76,10 @@ public sealed class SettingsViewModel : ViewModelBase
         var result = await _updateService.CheckManuallyAsync();
         if (result == UpdateCheckResult.UpdateAvailable)
         {
-            AvailableVersion = _updateService.PendingVersion;
-            UpdateStatus = LocalizationService.Format("L.Settings.NewVersionFmt", AvailableVersion!);
+            UpdateStatus = LocalizationService.Format("L.Settings.NewVersionFmt", _updateService.PendingVersion!);
         }
         else
         {
-            AvailableVersion = null;
             UpdateStatus = result switch
             {
                 UpdateCheckResult.UpToDate when _updateService.ManualCheckCooldownRemaining is { } remaining =>
@@ -202,7 +167,7 @@ public sealed class SettingsViewModel : ViewModelBase
             LocalizationService.Apply(_settings.Language);
             Persist();
 
-            if (AvailableVersion is null) _updateStatus = BuildIdleUpdateStatus();
+            _updateStatus = BuildIdleUpdateStatus();
             OnPropertyChanged(nameof(SelectedCopyFormatIndex));
             OnPropertyChanged(nameof(UpdateStatus));
             RaiseHotkeyDisplaysChanged();

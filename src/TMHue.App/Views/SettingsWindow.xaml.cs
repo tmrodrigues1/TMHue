@@ -30,27 +30,6 @@ public partial class SettingsWindow : Window
             await viewModel.CheckForUpdatesAsync();
     }
 
-    private void OnDeclineUpdateClick(object sender, RoutedEventArgs e)
-    {
-        if (DataContext is SettingsViewModel viewModel)
-            viewModel.DeclineUpdate();
-    }
-
-    /// <summary>The user consented: run the download/apply in a dedicated progress modal. On
-    /// success Velopack restarts the app (this never returns); on failure the offer stays on
-    /// screen so they can try again.</summary>
-    private void OnAcceptUpdateClick(object sender, RoutedEventArgs e)
-    {
-        if (DataContext is not SettingsViewModel viewModel)
-            return;
-
-        var progress = new UpdateProgressWindow(viewModel.UpdateService) { Owner = this };
-        progress.ShowDialog();
-
-        if (!progress.Succeeded)
-            viewModel.ReportUpdateFailed();
-    }
-
     private void OnChangeHotkeyClick(object sender, RoutedEventArgs e)
     {
         if (DataContext is not SettingsViewModel viewModel)

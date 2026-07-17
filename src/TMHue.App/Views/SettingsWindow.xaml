@@ -317,26 +317,9 @@
                              Foreground="{DynamicResource Brush.TextSecondary}" FontSize="12" />
                     </TextBlock>
 
-                    <!-- Idle state: a single "Verificar" pill. When an update is found it gives
-                         way to an explicit consent pair — nothing downloads without "Atualizar". -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                         <Button Content="{DynamicResource L.Settings.Check}" Style="{StaticResource Button.Pill}"
-                                Click="OnCheckForUpdatesClick" IsEnabled="{Binding CanCheckForUpdates}">
-                            <Button.Visibility>
-                                <Binding Path="IsUpdateAvailable">
-                                    <Binding.Converter>
-                                        <conv:InverseBooleanToVisibilityConverter />
-                                    </Binding.Converter>
-                                </Binding>
-                            </Button.Visibility>
-                        </Button>
-
-                        <Button Content="{DynamicResource L.Settings.NotNow}" Style="{StaticResource Button.Pill}"
-                                Margin="0,0,8,0" Click="OnDeclineUpdateClick"
-                                Visibility="{Binding IsUpdateAvailable, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                        <Button Content="{DynamicResource L.Settings.Update}" Style="{StaticResource Button.Primary}"
-                                Padding="14,7" FontSize="12" Click="OnAcceptUpdateClick"
-                                Visibility="{Binding IsUpdateAvailable, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                Click="OnCheckForUpdatesClick" IsEnabled="{Binding CanCheckForUpdates}" />
                     </StackPanel>
                 </Grid>
             </Border>
