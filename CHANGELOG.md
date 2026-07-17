@@ -2,6 +2,14 @@
 
 Todas as mudanças relevantes do TMHue serão registradas neste arquivo.
 
+## [1.2.2] - 2026-07-17
+
+### Correções
+
+- Corrigida a abertura da janela principal em instalações do Windows sem as fontes opcionais Segoe UI Variable e Cascadia Mono.
+- Quando a janela não puder ser renderizada, o app agora exibe um aviso e registra o erro, em vez de permanecer silencioso na bandeja.
+- Corrigida a exibição do tamanho instalado em Configurações > Aplicativos.
+
 ## [1.2.1] - 2026-07-17
 
 ### Novidades

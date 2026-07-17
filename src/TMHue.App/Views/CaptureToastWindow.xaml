@@ -30,7 +30,7 @@
                 <Border x:Name="SwatchDot" Width="24" Height="24" CornerRadius="8"
                         Background="#5B8DF6" BorderBrush="#40FFFFFF" BorderThickness="1"
                         Margin="0,0,12,0" VerticalAlignment="Center" />
-                <TextBlock x:Name="HexText" Text="#000000" FontFamily="Cascadia Mono, Consolas"
+                <TextBlock x:Name="HexText" Text="#000000" FontFamily="Consolas, Courier New"
                            FontSize="13" FontWeight="SemiBold" Foreground="#FFF5F4F8" VerticalAlignment="Center" />
                 <TextBlock Text="{DynamicResource L.Toast.Copied}" FontFamily="Segoe UI" FontSize="13"
                            Foreground="#FF8A8894" VerticalAlignment="Center" />

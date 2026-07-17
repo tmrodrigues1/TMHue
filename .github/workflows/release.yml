@@ -124,17 +124,13 @@ jobs:
         run: |
           $v = '${{ steps.version.outputs.version }}'
           $notes = @'
-          ## Novidades
+          ## Correções
 
-          Interface em dois idiomas: alterne entre Português (Brasil) e Inglês (US) diretamente nas configurações, sem reiniciar o aplicativo.
+          - Corrigida a abertura da janela principal em instalações do Windows sem as fontes opcionais Segoe UI Variable e Cascadia Mono.
 
-          Tema claro e escuro: escolha a aparência que melhor combina com seu ambiente e mantenha uma experiência visual mais confortável durante o uso.
+          - Quando a janela não puder ser renderizada, o app agora exibe um aviso e registra o erro, em vez de permanecer silencioso na bandeja.
 
-          ## Melhorias
-
-          Extrator de paletas mais completo: agora identifica até 15 cores dominantes, oferecendo uma leitura mais rica e representativa das imagens.
-
-          Captura de região otimizada: grandes seleções são redimensionadas de forma inteligente durante a captura, reduzindo o consumo de memória sem comprometer a qualidade da paleta gerada.
+          - Corrigida a exibição do tamanho instalado em Configurações > Aplicativos.
           '@
           gh release edit "v$v" --repo $env:REPO_URL --notes $notes
           if ($LASTEXITCODE -ne 0) { throw 'Falha ao adicionar as notas da release.' }

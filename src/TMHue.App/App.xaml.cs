@@ -109,9 +109,58 @@ public partial class App : System.Windows.Application
         SetupHotkey();
 
         if (!startMinimized)
-            _mainWindow.Show();
+            ShowMainWindow();
 
         SetupUpdates();
+        UpdateUninstallEstimatedSize();
+    }
+
+    /// <summary>O Velopack registra a entrada de desinstalação sem o valor "EstimatedSize", e é
+    /// exclusivamente desse valor que Configurações > Aplicativos tira o tamanho exibido — sem
+    /// ele, o app aparece sem tamanho. Calculado e gravado em segundo plano a cada início, o que
+    /// também o mantém correto após atualizações.</summary>
+    private static void UpdateUninstallEstimatedSize()
+    {
+        ThreadPool.QueueUserWorkItem(_ =>
+        {
+            try
+            {
+                // O exe instalado fica em ...\com.thiagorodrigues.TMHue\current\; a raiz da
+                // instalação (com Update.exe) é o pai. Sem Update.exe é um build de
+                // desenvolvimento ou portable — nada a fazer.
+                var installRoot = Path.GetDirectoryName(
+                    AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar));
+                if (installRoot is null || !File.Exists(Path.Combine(installRoot, "Update.exe")))
+                    return;
+
+                var totalBytes = new DirectoryInfo(installRoot)
+                    .EnumerateFiles("*", SearchOption.AllDirectories)
+                    .Sum(f => f.Length);
+
+                using var uninstall = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
+                    @"Software\Microsoft\Windows\CurrentVersion\Uninstall", writable: true);
+                if (uninstall is null) return;
+
+                var rootName = Path.GetFileName(installRoot);
+                foreach (var name in uninstall.GetSubKeyNames())
+                {
+                    using var key = uninstall.OpenSubKey(name, writable: true);
+                    var location = key?.GetValue("InstallLocation") as string
+                        ?? key?.GetValue("UninstallString") as string;
+                    if (location?.Contains(rootName, StringComparison.OrdinalIgnoreCase) == true)
+                    {
+                        // EstimatedSize é em KB, DWORD.
+                        key!.SetValue("EstimatedSize", (int)(totalBytes / 1024),
+                            Microsoft.Win32.RegistryValueKind.DWord);
+                        break;
+                    }
+                }
+            }
+            catch
+            {
+                // cosmético; nunca pode afetar o startup
+            }
+        });
     }
 
     /// <summary>Checagem de atualização só depois da UI pronta, em segundo plano, no máximo
@@ -328,10 +377,28 @@ public partial class App : System.Windows.Application
 
     private void ShowMainWindow()
     {
-        _mainWindow ??= CreateMainWindow();
-        _mainWindow.Show();
-        _mainWindow.WindowState = WindowState.Normal;
-        _mainWindow.Activate();
+        try
+        {
+            _mainWindow ??= CreateMainWindow();
+            _mainWindow.Show();
+            _mainWindow.WindowState = WindowState.Normal;
+            _mainWindow.Activate();
+        }
+        catch (Exception ex)
+        {
+            // Se a própria janela não consegue nem renderizar (ex.: DirectWrite com
+            // UnauthorizedAccessException por cache de fontes corrompido), avisar via
+            // MessageBox do WinForms — que usa GDI, não o pipeline de texto do WPF — em vez
+            // de deixar o app "mudo" na bandeja. A janela quebrada é descartada para que a
+            // próxima tentativa recrie do zero.
+            LogErrorSafe(ex);
+            _mainWindow = null;
+            System.Windows.Forms.MessageBox.Show(
+                $"Não foi possível abrir a janela do TMHue.\n\n{ex.Message}\n\nDetalhes em: {Path.Combine(AppPaths.LogsFolder, "errors.log")}",
+                "TMHue",
+                System.Windows.Forms.MessageBoxButtons.OK,
+                System.Windows.Forms.MessageBoxIcon.Error);
+        }
     }
 
     /// <summary>Ctrl+Alt+O acts as a show/hide toggle: if the window is already visible and
