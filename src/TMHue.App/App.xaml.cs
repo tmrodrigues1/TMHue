@@ -50,6 +50,25 @@ public partial class App : System.Windows.Application
             args.Handled = true;
         };
 
+        // O ícone da bandeja é um NotifyIcon do WinForms; exceções disparadas pelos seus eventos
+        // de mouse sobem pelo loop de mensagens do WinForms e não passam pelo
+        // DispatcherUnhandledException — sem este handler, o usuário vê o diálogo genérico
+        // "Microsoft .NET" de erro não tratado.
+        System.Windows.Forms.Application.SetUnhandledExceptionMode(
+            System.Windows.Forms.UnhandledExceptionMode.CatchException);
+        System.Windows.Forms.Application.ThreadException += (_, args) =>
+        {
+            try
+            {
+                Directory.CreateDirectory(AppPaths.LogsFolder);
+                AppendErrorLog(args.Exception);
+            }
+            catch
+            {
+                // logging must never crash the handler
+            }
+        };
+
         var startMinimized = e.Args.Contains("--minimized");
 
         _singleInstance = new SingleInstanceService();
@@ -84,12 +103,7 @@ public partial class App : System.Windows.Application
         var history = _services.GetRequiredService<IColorHistoryService>();
         history.Load();
 
-        _mainWindow = _services.GetRequiredService<MainWindow>();
-        _mainWindow.SettingsRequested += (_, _) => OpenSettings();
-        _mainWindow.ExitRequested += (_, _) => ExitApplication();
-        _mainWindow.ContrastCheckerRequested += (_, _) => OpenContrastChecker();
-        _mainWindow.HarmonyRequested += (_, _) => OpenHarmonyGenerator();
-        _mainWindow.PaletteExtractorRequested += (_, _) => OpenPaletteExtractor();
+        _mainWindow = CreateMainWindow();
 
         SetupTray();
         SetupHotkey();
@@ -178,7 +192,6 @@ public partial class App : System.Windows.Application
             () => sp.GetRequiredService<AppSettings>()));
 
         services.AddSingleton<MainViewModel>();
-        services.AddSingleton<MainWindow>();
     }
 
     private void SetupTray()
@@ -288,9 +301,34 @@ public partial class App : System.Windows.Application
         });
     }
 
+    /// <summary>WPF proíbe Show() em uma janela já fechada (InvalidOperationException). Se a
+    /// MainWindow for realmente fechada por qualquer caminho — "Fechar para a bandeja" desmarcado,
+    /// Alt+F4, fim de sessão — uma nova instância é criada aqui, para que o ícone da bandeja, o
+    /// atalho global e uma segunda instância sempre consigam reabrir a janela.</summary>
+    private MainWindow CreateMainWindow()
+    {
+        var window = new MainWindow(
+            _services!.GetRequiredService<MainViewModel>(),
+            _services!.GetRequiredService<ISettingsRepository>(),
+            _services!.GetRequiredService<AppSettings>());
+
+        window.SettingsRequested += (_, _) => OpenSettings();
+        window.ExitRequested += (_, _) => ExitApplication();
+        window.ContrastCheckerRequested += (_, _) => OpenContrastChecker();
+        window.HarmonyRequested += (_, _) => OpenHarmonyGenerator();
+        window.PaletteExtractorRequested += (_, _) => OpenPaletteExtractor();
+        window.Closed += (_, _) =>
+        {
+            if (ReferenceEquals(_mainWindow, window))
+                _mainWindow = null;
+        };
+
+        return window;
+    }
+
     private void ShowMainWindow()
     {
-        if (_mainWindow is null) return;
+        _mainWindow ??= CreateMainWindow();
         _mainWindow.Show();
         _mainWindow.WindowState = WindowState.Normal;
         _mainWindow.Activate();
@@ -301,9 +339,8 @@ public partial class App : System.Windows.Application
     /// already looking at.</summary>
     private void ToggleMainWindow()
     {
-        if (_mainWindow is null) return;
-
-        if (_mainWindow.IsVisible && _mainWindow.WindowState != WindowState.Minimized && _mainWindow.IsActive)
+        if (_mainWindow is not null
+            && _mainWindow.IsVisible && _mainWindow.WindowState != WindowState.Minimized && _mainWindow.IsActive)
             _mainWindow.WindowState = WindowState.Minimized;
         else
             ShowMainWindow();
