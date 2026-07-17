@@ -116,3 +116,25 @@ jobs:
             --outputDir artifacts/releases `
             --releaseName "TMHue $v" --tag 'v${{ steps.version.outputs.version }}' --publish
           if ($LASTEXITCODE -ne 0) { throw 'Falha no vpk upload.' }
+
+      - name: Adicionar notas da release
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $v = '${{ steps.version.outputs.version }}'
+          $notes = @'
+          ## Novidades
+
+          Interface em dois idiomas: alterne entre Português (Brasil) e Inglês (US) diretamente nas configurações, sem reiniciar o aplicativo.
+
+          Tema claro e escuro: escolha a aparência que melhor combina com seu ambiente e mantenha uma experiência visual mais confortável durante o uso.
+
+          ## Melhorias
+
+          Extrator de paletas mais completo: agora identifica até 15 cores dominantes, oferecendo uma leitura mais rica e representativa das imagens.
+
+          Captura de região otimizada: grandes seleções são redimensionadas de forma inteligente durante a captura, reduzindo o consumo de memória sem comprometer a qualidade da paleta gerada.
+          '@
+          gh release edit "v$v" --repo $env:REPO_URL --notes $notes
+          if ($LASTEXITCODE -ne 0) { throw 'Falha ao adicionar as notas da release.' }
