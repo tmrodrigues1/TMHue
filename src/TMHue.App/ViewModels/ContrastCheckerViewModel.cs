@@ -12,7 +12,7 @@ namespace TMHue.App.ViewModels;
 /// a bonus suggestion for the smallest change that would get a failing pair to pass AA.</summary>
 public sealed class ContrastCheckerViewModel : ViewModelBase, IDisposable
 {
-    private const string InvalidColorMessage = "Cor inválida. Use HEX, RGB ou HSL.";
+    private static string InvalidColorMessage => Infrastructure.LocalizationService.Get("L.Contrast.InvalidColor");
 
     private readonly ColorPickerCoordinator _coordinator;
     private readonly Func<AppSettings> _settingsAccessor;
@@ -47,7 +47,8 @@ public sealed class ContrastCheckerViewModel : ViewModelBase, IDisposable
 
     /// <summary>Discreet label showing the color format the user has set as default in
     /// Configurações, so the inputs above make sense without opening the tooltip.</summary>
-    public string DefaultFormatLabel => $"Formato padrão: {_settingsAccessor().CopyFormat.ToLabel()}";
+    public string DefaultFormatLabel =>
+        Infrastructure.LocalizationService.Format("L.Contrast.DefaultFormatFmt", _settingsAccessor().CopyFormat.ToLabel());
 
     /// <summary>Longest string <see cref="RgbColor.Format"/> can ever produce for each format —
     /// "#RRGGBB" (7), "rgb(255, 255, 255)" (19), "hsl(359, 100%, 100%)" (21) — used as the input
@@ -227,7 +228,9 @@ public sealed class ContrastCheckerViewModel : ViewModelBase, IDisposable
         var suggestion = WcagContrast.SuggestForegroundAdjustment(text, background, WcagLevel.AaNormalText);
         if (suggestion is null) return null;
 
-        var action = suggestion.Value.Darken ? "Escureça" : "Clareie";
-        return $"{action} o texto em {suggestion.Value.PercentChange:0}% para passar no AA (texto normal).";
+        var action = Infrastructure.LocalizationService.Get(
+            suggestion.Value.Darken ? "L.Contrast.Darken" : "L.Contrast.Lighten");
+        return Infrastructure.LocalizationService.Format(
+            "L.Contrast.SuggestionFmt", action, suggestion.Value.PercentChange);
     }
 }

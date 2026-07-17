@@ -57,7 +57,7 @@ public partial class UpdateProgressWindow : Window
         // frozen bar, and allow closing.
         Succeeded = true;
         _finished = true;
-        StatusText.Text = "Concluído — reiniciando…";
+        StatusText.Text = LocalizationService.Get("L.UpdateProgress.Done");
         ReportProgress(100);
     }
 
@@ -67,7 +67,7 @@ public partial class UpdateProgressWindow : Window
         PercentText.Text = $"{percent}%";
         ProgressFill.Width = ProgressTrack.ActualWidth * percent / 100.0;
 
-        if (percent >= 100)
-            StatusText.Text = "Instalando…";
+        if (percent >= 100 && !_finished)
+            StatusText.Text = LocalizationService.Get("L.UpdateProgress.Installing");
     }
 }

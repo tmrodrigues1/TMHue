@@ -8,8 +8,20 @@ namespace TMHue.Core.Services;
 /// their bitmap into an <see cref="RgbColor"/> array however they like.</summary>
 public static class PaletteExtractor
 {
+    // Two candidate colors closer than this (redmean-weighted RGB distance) are treated as
+    // shades of the same color and merged, freeing a palette slot for a genuinely different
+    // color. ~40 keeps distinct hues apart while collapsing e.g. several near-blacks.
+    private const double MergeDistance = 40.0;
+
+    // How many median-cut boxes to produce per requested color before merging. Over-segmenting
+    // lets a dominant color (a dark background, say) burn through its many boxes and still
+    // leave boxes for minority colors; the merge pass then collapses its shades back into one.
+    private const int OverSegmentationFactor = 4;
+
     /// <summary>Reduces <paramref name="pixels"/> to at most <paramref name="colorCount"/>
-    /// representative colors, ordered from most to least dominant (by pixel population).</summary>
+    /// representative colors, ordered from most to least dominant (by pixel population).
+    /// Over-segments via median cut, then merges perceptually similar shades so one dominant
+    /// color can't crowd distinct minority colors out of the palette.</summary>
     public static IReadOnlyList<RgbColor> Extract(IReadOnlyList<RgbColor> pixels, int colorCount = 5)
     {
         if (pixels.Count == 0) return Array.Empty<RgbColor>();
@@ -18,7 +30,8 @@ public static class PaletteExtractor
 
         // Median cut: repeatedly split the box with the widest channel range at its median,
         // so each final box gathers pixels that are actually similar to each other.
-        while (boxes.Count < colorCount)
+        var targetBoxes = colorCount * OverSegmentationFactor;
+        while (boxes.Count < targetBoxes)
         {
             var widest = FindWidestBox(boxes);
             if (widest is null) break; // every remaining box is a single flat color
@@ -29,10 +42,49 @@ public static class PaletteExtractor
             boxes.Add(second);
         }
 
-        return boxes
-            .OrderByDescending(box => box.Count)
-            .Select(Average)
+        // Merge pass: walk candidates from most to least populous; a candidate close to an
+        // already-kept color just reinforces that color's population instead of taking a slot.
+        var candidates = boxes
+            .Select(box => (Color: Average(box), Count: (long)box.Count))
+            .OrderByDescending(c => c.Count)
+            .ToList();
+
+        var kept = new List<(RgbColor Color, long Count)>();
+        foreach (var candidate in candidates)
+        {
+            var mergedInto = -1;
+            for (var i = 0; i < kept.Count; i++)
+            {
+                if (Distance(kept[i].Color, candidate.Color) < MergeDistance)
+                {
+                    mergedInto = i;
+                    break;
+                }
+            }
+
+            if (mergedInto >= 0)
+                kept[mergedInto] = (kept[mergedInto].Color, kept[mergedInto].Count + candidate.Count);
+            else
+                kept.Add(candidate);
+        }
+
+        return kept
+            .OrderByDescending(c => c.Count)
+            .Take(colorCount)
+            .Select(c => c.Color)
             .ToArray();
+    }
+
+    // "Redmean" perceptually-weighted RGB distance: cheap, no color-space conversion, yet far
+    // closer to human perception than plain Euclidean RGB.
+    private static double Distance(RgbColor a, RgbColor b)
+    {
+        var rMean = (a.Red + b.Red) / 2.0;
+        double dr = a.Red - b.Red, dg = a.Green - b.Green, db = a.Blue - b.Blue;
+        return Math.Sqrt(
+            (2 + rMean / 256.0) * dr * dr +
+            4 * dg * dg +
+            (2 + (255 - rMean) / 256.0) * db * db);
     }
 
     private static List<RgbColor>? FindWidestBox(List<List<RgbColor>> boxes)

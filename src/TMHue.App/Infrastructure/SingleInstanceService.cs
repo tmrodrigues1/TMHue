@@ -24,6 +24,7 @@ public sealed class SingleInstanceService : IDisposable
 
     private Mutex? _mutex;
     private CancellationTokenSource? _listenerCts;
+    private int _disposed;
 
     public event EventHandler<SecondInstanceAction>? SecondInstanceRequested;
 
@@ -98,9 +99,16 @@ public sealed class SingleInstanceService : IDisposable
 
     public void Dispose()
     {
-        _listenerCts?.Cancel();
-        _listenerCts?.Dispose();
-        _mutex?.ReleaseMutex();
-        _mutex?.Dispose();
+        if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
+
+        var listenerCts = Interlocked.Exchange(ref _listenerCts, null);
+        listenerCts?.Cancel();
+        listenerCts?.Dispose();
+
+        var mutex = Interlocked.Exchange(ref _mutex, null);
+        if (mutex is null) return;
+
+        mutex.ReleaseMutex();
+        mutex.Dispose();
     }
 }

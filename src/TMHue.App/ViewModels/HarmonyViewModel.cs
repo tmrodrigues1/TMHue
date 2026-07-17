@@ -24,6 +24,10 @@ public sealed class HarmonySwatch
     public RgbColor Color { get; }
     public string Value { get; }
     public System.Windows.Media.Brush Brush { get; }
+
+    /// <summary>Localized "Clique para copiar {value}" tooltip. Computed at construction —
+    /// swatches are rebuilt whenever the palette changes, which is often enough.</summary>
+    public string CopyTooltip => LocalizationService.Format("L.Common.ClickToCopyFmt", Value);
 }
 
 /// <summary>A titled row of harmony swatches (e.g. "Complementar" with its two colors), plus a
@@ -36,7 +40,7 @@ public sealed record HarmonyGroup(string Title, string Description, IReadOnlyLis
 /// it in the user's default format.</summary>
 public sealed class HarmonyViewModel : ViewModelBase, IDisposable
 {
-    private const string InvalidColorMessage = "Cor inválida. Use HEX, RGB ou HSL.";
+    private static string InvalidColorMessage => LocalizationService.Get("L.Contrast.InvalidColor");
 
     private readonly ColorPickerCoordinator _coordinator;
     private readonly IClipboardService _clipboard;
@@ -174,26 +178,21 @@ public sealed class HarmonyViewModel : ViewModelBase, IDisposable
         var format = _displayFormat;
 
         Groups.Clear();
-        Groups.Add(BuildGroup("Complementar",
-            "A cor oposta no círculo cromático (180° de distância). Cria o contraste mais forte possível — ideal para destacar botões e chamadas de ação.",
+        Groups.Add(BuildGroup("L.Harmony.Complementary", "L.Harmony.ComplementaryDesc",
             ColorHarmonies.Complementary(_baseColor), format));
-        Groups.Add(BuildGroup("Análoga",
-            "Cores vizinhas no círculo cromático (30° para cada lado). Combinam naturalmente entre si e criam visuais suaves e harmoniosos.",
+        Groups.Add(BuildGroup("L.Harmony.Analogous", "L.Harmony.AnalogousDesc",
             ColorHarmonies.Analogous(_baseColor), format));
-        Groups.Add(BuildGroup("Triádica",
-            "Três cores igualmente espaçadas no círculo cromático (120° entre si). Equilibra contraste e harmonia — paletas vibrantes sem perder coesão.",
+        Groups.Add(BuildGroup("L.Harmony.Triadic", "L.Harmony.TriadicDesc",
             ColorHarmonies.Triadic(_baseColor), format));
-        Groups.Add(BuildGroup("Tetrádica",
-            "Quatro cores igualmente espaçadas no círculo cromático (90° entre si). Oferece mais variedade; funciona melhor quando uma cor domina e as outras acentuam.",
+        Groups.Add(BuildGroup("L.Harmony.Tetradic", "L.Harmony.TetradicDesc",
             ColorHarmonies.Tetradic(_baseColor), format));
-        Groups.Add(BuildGroup("Tons claros (tints)",
-            "A mesma cor progressivamente mais clara, em direção ao branco. Útil para fundos, estados de hover e hierarquia visual.",
+        Groups.Add(BuildGroup("L.Harmony.Tints", "L.Harmony.TintsDesc",
             ColorHarmonies.Tints(_baseColor), format));
-        Groups.Add(BuildGroup("Tons escuros (shades)",
-            "A mesma cor progressivamente mais escura, em direção ao preto. Útil para textos, bordas e estados pressionados.",
+        Groups.Add(BuildGroup("L.Harmony.Shades", "L.Harmony.ShadesDesc",
             ColorHarmonies.Shades(_baseColor), format));
     }
 
-    private static HarmonyGroup BuildGroup(string title, string description, RgbColor[] colors, CopyFormat format) =>
-        new(title, description, colors.Select(c => new HarmonySwatch(c, format)).ToArray());
+    private static HarmonyGroup BuildGroup(string titleKey, string descriptionKey, RgbColor[] colors, CopyFormat format) =>
+        new(LocalizationService.Get(titleKey), LocalizationService.Get(descriptionKey),
+            colors.Select(c => new HarmonySwatch(c, format)).ToArray());
 }

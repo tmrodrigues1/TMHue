@@ -76,6 +76,12 @@ public sealed class MainViewModel : ViewModelBase
 
         SetCurrent(_currentColor);
         RefreshHistory();
+
+        LocalizationService.LanguageChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(MorePanelToggleLabel));
+            OnPropertyChanged(nameof(CopyCurrentTooltip));
+        };
     }
 
     /// <summary>How many swatches the main window shows; older entries go to the "Ver mais" sidebar.</summary>
@@ -105,7 +111,12 @@ public sealed class MainViewModel : ViewModelBase
         }
     }
 
-    public string MorePanelToggleLabel => IsMorePanelOpen ? "Ver menos" : "Ver mais >";
+    public string MorePanelToggleLabel =>
+        LocalizationService.Get(IsMorePanelOpen ? "L.Main.SeeLess" : "L.Main.SeeMore");
+
+    /// <summary>Localized "Copiar {format}" tooltip for the main copy button — computed here
+    /// because XAML StringFormat can't pull the verb from the language dictionary.</summary>
+    public string CopyCurrentTooltip => LocalizationService.Format("L.Common.CopyFmt", PrimaryFormat.Label);
 
     private bool _hasMoreColors;
     public bool HasMoreColors
@@ -211,6 +222,7 @@ public sealed class MainViewModel : ViewModelBase
 
         var defaultFormat = _captureFormatOverride ?? _settingsAccessor().CopyFormat;
         PrimaryFormat = BuildEntry(defaultFormat, color, isDefault: true);
+        OnPropertyChanged(nameof(CopyCurrentTooltip));
 
         // Replace entries in place instead of Clear+Add: this runs on every hover mouse move,
         // and clearing forces the ItemsControl to drop and regenerate its containers each time.

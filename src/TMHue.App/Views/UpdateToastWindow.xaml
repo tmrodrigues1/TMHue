@@ -35,9 +35,9 @@
                     <TextBlock Text="&#xE896;" FontFamily="Segoe MDL2 Assets" FontSize="12"
                                Foreground="#FFFFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center" />
                 </Border>
-                <TextBlock x:Name="MessageText" Text="Nova versão disponível" FontFamily="Segoe UI"
+                <TextBlock x:Name="MessageText" FontFamily="Segoe UI"
                            FontSize="13" Foreground="#FFF5F4F8" VerticalAlignment="Center" Margin="0,0,12,0" />
-                <Button x:Name="UpdateButton" Content="Atualizar" Click="OnUpdateClick"
+                <Button x:Name="UpdateButton" Content="{DynamicResource L.Settings.Update}" Click="OnUpdateClick"
                         FontFamily="Segoe UI" FontSize="12" FontWeight="SemiBold"
                         Foreground="#FFFFFFFF" Background="#5B8DF6" BorderThickness="0"
                         Padding="14,5" Cursor="Hand" VerticalAlignment="Center">

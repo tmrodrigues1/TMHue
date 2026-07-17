@@ -7,9 +7,12 @@
     <SolidColorBrush x:Key="Brush.Border" Color="#1A000000" />
     <SolidColorBrush x:Key="Brush.BorderStrong" Color="#33000000" />
 
+    <!-- WCAG: on the white/near-white surfaces, TextPrimary ≈ 15.9:1, TextSecondary ≈ 5.7:1 and
+         TextTertiary ≈ 4.8:1 — all above the 4.5:1 AA minimum for normal text. The old alphas
+         (8A/54) flattened to ≈3.9:1 and ≈2.3:1 and failed AA. -->
     <SolidColorBrush x:Key="Brush.TextPrimary" Color="#FF16161A" />
-    <SolidColorBrush x:Key="Brush.TextSecondary" Color="#8A16161A" />
-    <SolidColorBrush x:Key="Brush.TextTertiary" Color="#5416161A" />
+    <SolidColorBrush x:Key="Brush.TextSecondary" Color="#A616161A" />
+    <SolidColorBrush x:Key="Brush.TextTertiary" Color="#9916161A" />
 
     <SolidColorBrush x:Key="Brush.Accent" Color="#FF2F6FED" />
     <SolidColorBrush x:Key="Brush.AccentHover" Color="#FF2760D0" />
@@ -17,18 +20,17 @@
     <SolidColorBrush x:Key="Brush.AccentSoft" Color="#182F6FED" />
     <SolidColorBrush x:Key="Brush.HotkeyText" Color="#FF6A4BE0" />
 
-    <LinearGradientBrush x:Key="Brush.CaptureGradient" StartPoint="0,0.5" EndPoint="1,0.5">
-        <GradientStop Color="#FF8B5CF6" Offset="0" />
-        <GradientStop Color="#FF3B82F6" Offset="1" />
-    </LinearGradientBrush>
-    <LinearGradientBrush x:Key="Brush.CaptureGradientHover" StartPoint="0,0.5" EndPoint="1,0.5">
-        <GradientStop Color="#FF9B70F8" Offset="0" />
-        <GradientStop Color="#FF5493F8" Offset="1" />
-    </LinearGradientBrush>
-    <LinearGradientBrush x:Key="Brush.CaptureGradientPressed" StartPoint="0,0.5" EndPoint="1,0.5">
-        <GradientStop Color="#FF7A4EDC" Offset="0" />
-        <GradientStop Color="#FF3271DC" Offset="1" />
-    </LinearGradientBrush>
+    <!-- Tool buttons on light: flat near-white fill (#FDFDFD) with a #EEEEF2 outline, and dark
+         text (white text would vanish on this fill). Hover/pressed nudge the fill darker. -->
+    <SolidColorBrush x:Key="Brush.CaptureGradient" Color="#FFFDFDFD" />
+    <SolidColorBrush x:Key="Brush.CaptureGradientHover" Color="#FFF2F2F5" />
+    <SolidColorBrush x:Key="Brush.CaptureGradientPressed" Color="#FFE9E9EE" />
+    <SolidColorBrush x:Key="Brush.CaptureButtonText" Color="#FF16161A" />
+    <SolidColorBrush x:Key="Brush.CaptureButtonBorder" Color="#FFEEEEF2" />
+
+    <!-- Feedback colors, AA-compliant on the light surfaces (error ≈ 5.6:1, success ≈ 5.0:1). -->
+    <SolidColorBrush x:Key="Brush.Error" Color="#FFC42B2B" />
+    <SolidColorBrush x:Key="Brush.Success" Color="#FF1B7F4D" />
 
     <SolidColorBrush x:Key="Brush.OverlayScrim" Color="#59000000" />
     <SolidColorBrush x:Key="Brush.PreviewSurface" Color="#F5222226" />

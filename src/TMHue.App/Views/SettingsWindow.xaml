@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:conv="clr-namespace:TMHue.App.Converters"
-        Title="Configurações — TMHue"
+        Title="{DynamicResource L.Settings.WindowTitle}"
         Width="400"
         SizeToContent="Height"
         WindowStyle="None"
@@ -30,6 +30,7 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <!-- Title bar, matching the main window's proportions exactly. -->
@@ -47,13 +48,13 @@
                                    Foreground="{DynamicResource Brush.HotkeyText}"
                                    HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
-                    <TextBlock Text="Configurações" Style="{StaticResource Text.Title}" FontSize="15"
+                    <TextBlock Text="{DynamicResource L.Common.Settings}" Style="{StaticResource Text.Title}" FontSize="15"
                                Margin="10,0,0,0" VerticalAlignment="Center" />
                 </StackPanel>
 
                 <Button Grid.Column="1" Style="{StaticResource Button.Close}" Content="&#xE8BB;"
                         FontFamily="Segoe MDL2 Assets" FontSize="10" Width="30" Height="30"
-                        Click="OnCloseClick" ToolTip="Fechar" />
+                        Click="OnCloseClick" ToolTip="{DynamicResource L.Common.Close}" />
             </Grid>
 
             <!-- Preferences card: tighter vertical rhythm so the whole window fits shorter screens. -->
@@ -61,16 +62,73 @@
                     BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
                     CornerRadius="14" Padding="16,12" Margin="0,8,0,0">
                 <StackPanel>
-                    <CheckBox Content="Iniciar com o Windows" IsChecked="{Binding StartWithWindows}" Margin="0,0,0,10" />
-                    <CheckBox Content="Fechar para a bandeja do sistema" IsChecked="{Binding CloseToTray}" Margin="0,0,0,10" />
-                    <CheckBox Content="Mostrar confirmação após capturar" IsChecked="{Binding ShowCaptureNotification}" Margin="0,0,0,10" />
-                    <CheckBox Content="Mostrar lupa ao capturar" IsChecked="{Binding ShowMagnifier}" />
+                    <CheckBox Content="{DynamicResource L.Settings.StartWithWindows}" IsChecked="{Binding StartWithWindows}" Margin="0,0,0,10" />
+                    <CheckBox Content="{DynamicResource L.Settings.CloseToTray}" IsChecked="{Binding CloseToTray}" Margin="0,0,0,10" />
+                    <CheckBox Content="{DynamicResource L.Settings.ShowCaptureNotification}" IsChecked="{Binding ShowCaptureNotification}" Margin="0,0,0,10" />
+                    <CheckBox Content="{DynamicResource L.Settings.ShowMagnifier}" IsChecked="{Binding ShowMagnifier}" />
                 </StackPanel>
+            </Border>
+
+            <!-- Appearance card: theme and language side by side, same layout as the capture card. -->
+            <Border Grid.Row="2" Background="{DynamicResource Brush.SurfaceElevated}"
+                    BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
+                    CornerRadius="14" Padding="16,12" Margin="0,12,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="14" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="{DynamicResource L.Settings.Theme}" Style="{StaticResource Text.Title}" FontSize="13" />
+                            <TextBlock Text="&#xE9CE;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                       Foreground="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center"
+                                       Margin="6,0,0,0" Cursor="Help"
+                                       ToolTipService.InitialShowDelay="0" ToolTipService.ShowDuration="60000">
+                                <TextBlock.ToolTip>
+                                    <ToolTip>
+                                        <StackPanel MaxWidth="250">
+                                            <TextBlock TextWrapping="Wrap" LineHeight="17">
+                                                <Run Text="{DynamicResource L.Settings.ThemeTip2a}" FontWeight="SemiBold"
+                                                     Foreground="{DynamicResource Brush.HotkeyText}" /><Run
+                                                     Text="{DynamicResource L.Settings.ThemeTip2b}" />
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </ToolTip>
+                                </TextBlock.ToolTip>
+                            </TextBlock>
+                        </StackPanel>
+                        <ComboBox SelectedIndex="{Binding SelectedThemeIndex}">
+                            <ComboBoxItem Content="{DynamicResource L.Settings.ThemeLight}" />
+                            <ComboBoxItem Content="{DynamicResource L.Settings.ThemeDark}" />
+                        </ComboBox>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="{DynamicResource L.Settings.Language}" Style="{StaticResource Text.Title}" FontSize="13" />
+                            <TextBlock Text="&#xE9CE;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                       Foreground="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center"
+                                       Margin="6,0,0,0" Cursor="Help"
+                                       ToolTipService.InitialShowDelay="0" ToolTipService.ShowDuration="60000">
+                                <TextBlock.ToolTip>
+                                    <ToolTip>
+                                        <TextBlock Text="{DynamicResource L.Settings.LanguageTip}" TextWrapping="Wrap"
+                                                   LineHeight="17" MaxWidth="250" />
+                                    </ToolTip>
+                                </TextBlock.ToolTip>
+                            </TextBlock>
+                        </StackPanel>
+                        <ComboBox ItemsSource="{Binding LanguageOptions}" SelectedIndex="{Binding SelectedLanguageIndex}" />
+                    </StackPanel>
+                </Grid>
             </Border>
 
             <!-- Capture options card: sample area and copy format share one card, side by side,
                  instead of two stacked cards — the single biggest height saving in this window. -->
-            <Border Grid.Row="2" Background="{DynamicResource Brush.SurfaceElevated}"
+            <Border Grid.Row="3" Background="{DynamicResource Brush.SurfaceElevated}"
                     BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
                     CornerRadius="14" Padding="16,12" Margin="0,12,0,0">
                 <Grid>
@@ -82,7 +140,7 @@
 
                 <StackPanel Grid.Column="0">
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                        <TextBlock Text="Amostra de cor" Style="{StaticResource Text.Title}" FontSize="13" />
+                        <TextBlock Text="{DynamicResource L.Settings.SampleTitle}" Style="{StaticResource Text.Title}" FontSize="13" />
                         <TextBlock Text="&#xE9CE;" FontFamily="Segoe MDL2 Assets" FontSize="13"
                                    Foreground="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center"
                                    Margin="6,0,0,0" Cursor="Help"
@@ -91,29 +149,33 @@
                                 <ToolTip>
                                     <StackPanel MaxWidth="250">
                                         <TextBlock TextWrapping="Wrap" LineHeight="17">
-                                            <Run Text="Pixel exato" FontWeight="SemiBold"
+                                            <Run Text="{DynamicResource L.Settings.SampleTip1a}" FontWeight="SemiBold"
                                                  Foreground="{DynamicResource Brush.HotkeyText}" /><Run
-                                                 Text=" lê a cor exata do pixel sob o cursor — ideal para acertar um ponto específico, como a borda de um ícone." />
+                                                 Text="{DynamicResource L.Settings.SampleTip1b}" />
                                         </TextBlock>
                                         <TextBlock TextWrapping="Wrap" LineHeight="17" Margin="0,8,0,0">
-                                            <Run Text="Média 5×5 (recomendado) / 11×11" FontWeight="SemiBold"
+                                            <Run Text="{DynamicResource L.Settings.SampleTip2a}" FontWeight="SemiBold"
                                                  Foreground="{DynamicResource Brush.HotkeyText}" /><Run
-                                                 Text=" calculam a cor predominante de uma pequena área ao redor do cursor, evitando variações causadas por ruído de compressão, anti-aliasing ou gradientes — ideal para pegar a cor de uma superfície." />
+                                                 Text="{DynamicResource L.Settings.SampleTip2b}" />
                                         </TextBlock>
                                         <TextBlock TextWrapping="Wrap" LineHeight="17" Margin="0,8,0,0">
-                                            <Run Text="Aplicado automaticamente e em tempo real ao passar o mouse — não precisa reabrir a captura." />
+                                            <Run Text="{DynamicResource L.Settings.SampleTip3}" />
                                         </TextBlock>
                                     </StackPanel>
                                 </ToolTip>
                             </TextBlock.ToolTip>
                         </TextBlock>
                     </StackPanel>
-                    <ComboBox ItemsSource="{Binding SampleAreaOptions}" SelectedIndex="{Binding SelectedSampleAreaIndex}" />
+                    <ComboBox SelectedIndex="{Binding SelectedSampleAreaIndex}">
+                        <ComboBoxItem Content="{DynamicResource L.Settings.SampleExact}" />
+                        <ComboBoxItem Content="{DynamicResource L.Settings.Sample5}" />
+                        <ComboBoxItem Content="{DynamicResource L.Settings.Sample11}" />
+                    </ComboBox>
                 </StackPanel>
 
                 <StackPanel Grid.Column="2">
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                        <TextBlock Text="Formato de cópia" Style="{StaticResource Text.Title}" FontSize="13" />
+                        <TextBlock Text="{DynamicResource L.Settings.CopyFormatTitle}" Style="{StaticResource Text.Title}" FontSize="13" />
                         <TextBlock Text="&#xE9CE;" FontFamily="Segoe MDL2 Assets" FontSize="13"
                                    Foreground="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center"
                                    Margin="6,0,0,0" Cursor="Help"
@@ -122,22 +184,22 @@
                                 <ToolTip>
                                     <StackPanel MaxWidth="260">
                                         <TextBlock TextWrapping="Wrap" LineHeight="17">
-                                            <Run Text="Formato padrão ao capturar uma cor:" />
+                                            <Run Text="{DynamicResource L.Settings.CopyTip0}" />
                                         </TextBlock>
                                         <TextBlock TextWrapping="Wrap" LineHeight="17" Margin="0,8,0,0">
-                                            <Run Text="1 HEX" FontWeight="SemiBold" Foreground="{DynamicResource Brush.HotkeyText}" /><Run
-                                                 Text=" — #RRGGBB, o padrão da web e de ferramentas de design." />
+                                            <Run Text="{DynamicResource L.Settings.CopyTip1a}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.HotkeyText}" /><Run
+                                                 Text="{DynamicResource L.Settings.CopyTip1b}" />
                                         </TextBlock>
                                         <TextBlock TextWrapping="Wrap" LineHeight="17" Margin="0,6,0,0">
-                                            <Run Text="2 RGB" FontWeight="SemiBold" Foreground="{DynamicResource Brush.HotkeyText}" /><Run
-                                                 Text=" — rgb(r, g, b), os três canais em decimal." />
+                                            <Run Text="{DynamicResource L.Settings.CopyTip2a}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.HotkeyText}" /><Run
+                                                 Text="{DynamicResource L.Settings.CopyTip2b}" />
                                         </TextBlock>
                                         <TextBlock TextWrapping="Wrap" LineHeight="17" Margin="0,6,0,0">
-                                            <Run Text="3 HSL" FontWeight="SemiBold" Foreground="{DynamicResource Brush.HotkeyText}" /><Run
-                                                 Text=" — matiz, saturação e luminosidade, útil para ajustar tons." />
+                                            <Run Text="{DynamicResource L.Settings.CopyTip3a}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.HotkeyText}" /><Run
+                                                 Text="{DynamicResource L.Settings.CopyTip3b}" />
                                         </TextBlock>
                                         <TextBlock TextWrapping="Wrap" LineHeight="17" Margin="0,8,0,0">
-                                            <Run Text="Durante a captura, pressione a tecla correspondente para usar outro formato apenas naquela cópia." />
+                                            <Run Text="{DynamicResource L.Settings.CopyTip4}" />
                                         </TextBlock>
                                     </StackPanel>
                                 </ToolTip>
@@ -151,11 +213,11 @@
 
             <!-- Hotkeys card: one compact line per hotkey (name · combo · Alterar) instead of the
                  old two-line rows, so five hotkeys take barely more height than three did. -->
-            <Border Grid.Row="3" Background="{DynamicResource Brush.SurfaceElevated}"
+            <Border Grid.Row="4" Background="{DynamicResource Brush.SurfaceElevated}"
                     BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
                     CornerRadius="14" Padding="16,12" Margin="0,12,0,0">
                 <StackPanel>
-                    <TextBlock Text="Atalhos globais" Style="{StaticResource Text.Title}" FontSize="13" Margin="0,0,0,10" />
+                    <TextBlock Text="{DynamicResource L.Settings.Hotkeys}" Style="{StaticResource Text.Title}" FontSize="13" Margin="0,0,0,10" />
 
                     <Grid Margin="0,0,0,8">
                         <Grid.ColumnDefinitions>
@@ -163,12 +225,12 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="Copiar cor" Style="{StaticResource Text.Body}"
+                        <TextBlock Grid.Column="0" Text="{DynamicResource L.Main.HotkeyCopy}" Style="{StaticResource Text.Body}"
                                    VerticalAlignment="Center" Foreground="{DynamicResource Brush.TextPrimary}" />
                         <TextBlock Grid.Column="1" Text="{Binding CaptureHotkeyDisplay, Mode=OneWay}"
                                    FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"
                                    Foreground="{DynamicResource Brush.HotkeyText}" Margin="0,0,10,0" />
-                        <Button Grid.Column="2" Content="Alterar" Tag="capture" Style="{StaticResource Button.Pill}"
+                        <Button Grid.Column="2" Content="{DynamicResource L.Common.Change}" Tag="capture" Style="{StaticResource Button.Pill}"
                                 Padding="10,4" VerticalAlignment="Center" Click="OnChangeHotkeyClick" />
                     </Grid>
 
@@ -178,12 +240,12 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="Abrir aplicativo" Style="{StaticResource Text.Body}"
+                        <TextBlock Grid.Column="0" Text="{DynamicResource L.Main.HotkeyOpenApp}" Style="{StaticResource Text.Body}"
                                    VerticalAlignment="Center" Foreground="{DynamicResource Brush.TextPrimary}" />
                         <TextBlock Grid.Column="1" Text="{Binding OpenAppHotkeyDisplay, Mode=OneWay}"
                                    FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"
                                    Foreground="{DynamicResource Brush.HotkeyText}" Margin="0,0,10,0" />
-                        <Button Grid.Column="2" Content="Alterar" Tag="open-app" Style="{StaticResource Button.Pill}"
+                        <Button Grid.Column="2" Content="{DynamicResource L.Common.Change}" Tag="open-app" Style="{StaticResource Button.Pill}"
                                 Padding="10,4" VerticalAlignment="Center" Click="OnChangeHotkeyClick" />
                     </Grid>
 
@@ -193,12 +255,12 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="Contraste (WCAG)" Style="{StaticResource Text.Body}"
+                        <TextBlock Grid.Column="0" Text="{DynamicResource L.Main.HotkeyContrast}" Style="{StaticResource Text.Body}"
                                    VerticalAlignment="Center" Foreground="{DynamicResource Brush.TextPrimary}" />
                         <TextBlock Grid.Column="1" Text="{Binding ContrastCheckerHotkeyDisplay, Mode=OneWay}"
                                    FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"
                                    Foreground="{DynamicResource Brush.HotkeyText}" Margin="0,0,10,0" />
-                        <Button Grid.Column="2" Content="Alterar" Tag="open-contrast-checker" Style="{StaticResource Button.Pill}"
+                        <Button Grid.Column="2" Content="{DynamicResource L.Common.Change}" Tag="open-contrast-checker" Style="{StaticResource Button.Pill}"
                                 Padding="10,4" VerticalAlignment="Center" Click="OnChangeHotkeyClick" />
                     </Grid>
 
@@ -208,12 +270,12 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="Harmonias de cor" Style="{StaticResource Text.Body}"
+                        <TextBlock Grid.Column="0" Text="{DynamicResource L.Main.HotkeyHarmony}" Style="{StaticResource Text.Body}"
                                    VerticalAlignment="Center" Foreground="{DynamicResource Brush.TextPrimary}" />
                         <TextBlock Grid.Column="1" Text="{Binding HarmonyHotkeyDisplay, Mode=OneWay}"
                                    FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"
                                    Foreground="{DynamicResource Brush.HotkeyText}" Margin="0,0,10,0" />
-                        <Button Grid.Column="2" Content="Alterar" Tag="open-harmony" Style="{StaticResource Button.Pill}"
+                        <Button Grid.Column="2" Content="{DynamicResource L.Common.Change}" Tag="open-harmony" Style="{StaticResource Button.Pill}"
                                 Padding="10,4" VerticalAlignment="Center" Click="OnChangeHotkeyClick" />
                     </Grid>
 
@@ -223,23 +285,23 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="Extrair paleta" Style="{StaticResource Text.Body}"
+                        <TextBlock Grid.Column="0" Text="{DynamicResource L.Main.HotkeyPalette}" Style="{StaticResource Text.Body}"
                                    VerticalAlignment="Center" Foreground="{DynamicResource Brush.TextPrimary}" />
                         <TextBlock Grid.Column="1" Text="{Binding PaletteExtractorHotkeyDisplay, Mode=OneWay}"
                                    FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"
                                    Foreground="{DynamicResource Brush.HotkeyText}" Margin="0,0,10,0" />
-                        <Button Grid.Column="2" Content="Alterar" Tag="open-palette-extractor" Style="{StaticResource Button.Pill}"
+                        <Button Grid.Column="2" Content="{DynamicResource L.Common.Change}" Tag="open-palette-extractor" Style="{StaticResource Button.Pill}"
                                 Padding="10,4" VerticalAlignment="Center" Click="OnChangeHotkeyClick" />
                     </Grid>
 
-                    <TextBlock Text="{Binding HotkeyError}" Foreground="IndianRed" FontSize="12"
+                    <TextBlock Text="{Binding HotkeyError}" Foreground="{DynamicResource Brush.Error}" FontSize="12"
                                Margin="0,8,0,0" TextWrapping="Wrap"
                                Visibility="{Binding HotkeyError, Converter={StaticResource StringToVisibility}}" />
                 </StackPanel>
             </Border>
 
             <!-- Updates card -->
-            <Border Grid.Row="4" Background="{DynamicResource Brush.SurfaceElevated}"
+            <Border Grid.Row="5" Background="{DynamicResource Brush.SurfaceElevated}"
                     BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
                     CornerRadius="14" Padding="16,12" Margin="0,12,0,0">
                 <Grid>
@@ -250,7 +312,7 @@
                     <TextBlock Grid.Column="0" Style="{StaticResource Text.Body}" VerticalAlignment="Center"
                                TextWrapping="Wrap" Margin="0,0,12,0"
                                Foreground="{DynamicResource Brush.TextPrimary}">
-                        <Run Text="Atualizações" /><LineBreak /><Run
+                        <Run Text="{DynamicResource L.Settings.Updates}" /><LineBreak /><Run
                              Text="{Binding UpdateStatus, Mode=OneWay}"
                              Foreground="{DynamicResource Brush.TextSecondary}" FontSize="12" />
                     </TextBlock>
@@ -258,7 +320,7 @@
                     <!-- Idle state: a single "Verificar" pill. When an update is found it gives
                          way to an explicit consent pair — nothing downloads without "Atualizar". -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button Content="Verificar" Style="{StaticResource Button.Pill}"
+                        <Button Content="{DynamicResource L.Settings.Check}" Style="{StaticResource Button.Pill}"
                                 Click="OnCheckForUpdatesClick" IsEnabled="{Binding CanCheckForUpdates}">
                             <Button.Visibility>
                                 <Binding Path="IsUpdateAvailable">
@@ -269,10 +331,10 @@
                             </Button.Visibility>
                         </Button>
 
-                        <Button Content="Agora não" Style="{StaticResource Button.Pill}"
+                        <Button Content="{DynamicResource L.Settings.NotNow}" Style="{StaticResource Button.Pill}"
                                 Margin="0,0,8,0" Click="OnDeclineUpdateClick"
                                 Visibility="{Binding IsUpdateAvailable, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                        <Button Content="Atualizar" Style="{StaticResource Button.Primary}"
+                        <Button Content="{DynamicResource L.Settings.Update}" Style="{StaticResource Button.Primary}"
                                 Padding="14,7" FontSize="12" Click="OnAcceptUpdateClick"
                                 Visibility="{Binding IsUpdateAvailable, Converter={StaticResource BooleanToVisibilityConverter}}" />
                     </StackPanel>

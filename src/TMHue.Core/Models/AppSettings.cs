@@ -4,6 +4,10 @@ public sealed class AppSettings
 {
     public AppTheme Theme { get; set; } = AppTheme.Dark;
 
+    /// <summary>UI language as an IETF tag. Only "pt-BR" and "en-US" are shipped; unknown
+    /// values fall back to "pt-BR" (the original language) at load time.</summary>
+    public string Language { get; set; } = "pt-BR";
+
     public CopyFormat CopyFormat { get; set; } = CopyFormat.Hex;
 
     public bool StartWithWindows { get; set; }

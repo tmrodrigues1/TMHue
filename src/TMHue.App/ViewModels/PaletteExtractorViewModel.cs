@@ -9,14 +9,14 @@ using TMHue.Core.ValueObjects;
 namespace TMHue.App.ViewModels;
 
 /// <summary>Backs the palette extraction window: an image (dropped file or screen-region
-/// capture) is decoded, downsampled and quantized locally into ~5 dominant colors. Nothing is
-/// ever uploaded — decoding and median-cut both run in-process.</summary>
+/// capture) is decoded, downsampled and quantized locally into up to 15 dominant colors.
+/// Nothing is ever uploaded — decoding and median-cut both run in-process.</summary>
 public sealed class PaletteExtractorViewModel : ViewModelBase
 {
-    // Rendered as two rows of five in the window.
-    private const int PaletteSize = 10;
+    // Rendered as three rows of five in the window.
+    private const int PaletteSize = 15;
 
-    // Downsampling cap: 128x128 (≤16k pixels) is plenty for a 5-color dominant palette and keeps
+    // Downsampling cap: 128x128 (≤16k pixels) is plenty for a dominant palette and keeps
     // extraction instant even for wallpapers-sized sources.
     private const int MaxSampleDimension = 128;
 
@@ -83,7 +83,7 @@ public sealed class PaletteExtractorViewModel : ViewModelBase
         }
         catch
         {
-            ErrorMessage = "Não foi possível ler a imagem. Use PNG, JPG, BMP, GIF ou WEBP.";
+            ErrorMessage = Infrastructure.LocalizationService.Get("L.Palette.ReadError");
         }
     }
 
@@ -115,7 +115,7 @@ public sealed class PaletteExtractorViewModel : ViewModelBase
             Palette.Add(new HarmonySwatch(color, format));
 
         if (Palette.Count == 0)
-            ErrorMessage = "Nenhuma cor pôde ser extraída dessa imagem.";
+            ErrorMessage = Infrastructure.LocalizationService.Get("L.Palette.NoColors");
     }
 
     /// <summary>Downscales the source so the longest side is at most

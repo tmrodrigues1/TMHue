@@ -41,21 +41,24 @@ public sealed class InverseBooleanToVisibilityConverter : IValueConverter
         throw new NotSupportedException();
 }
 
-/// <summary>Renders a WCAG pass/fail boolean as short Portuguese labels for the contrast checker.</summary>
+/// <summary>Renders a WCAG pass/fail boolean as short localized labels for the contrast checker.</summary>
 public sealed class PassFailToTextConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
-        value is true ? "Aprova" : "Reprova";
+        Infrastructure.LocalizationService.Get(value is true ? "L.Contrast.Pass" : "L.Contrast.Fail");
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
         throw new NotSupportedException();
 }
 
-/// <summary>Renders a WCAG pass/fail boolean as a green (pass) or red (fail) brush.</summary>
+/// <summary>Renders a WCAG pass/fail boolean as the theme's success (pass) or error (fail)
+/// brush. Resolved through the application resources at conversion time so the colors match
+/// whichever theme is active when the result is computed.</summary>
 public sealed class PassFailToBrushConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
-        value is true ? Brushes.MediumSeaGreen : Brushes.IndianRed;
+        System.Windows.Application.Current.TryFindResource(value is true ? "Brush.Success" : "Brush.Error")
+            ?? (value is true ? Brushes.MediumSeaGreen : Brushes.IndianRed);
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
         throw new NotSupportedException();

@@ -78,6 +78,9 @@ public partial class App : System.Windows.Application
         var themeService = _services.GetRequiredService<IThemeService>();
         themeService.Apply(_settings.Theme);
 
+        LocalizationService.Apply(_settings.Language);
+        LocalizationService.LanguageChanged += (_, _) => _trayIcon?.SetLabels(BuildTrayLabels());
+
         var history = _services.GetRequiredService<IColorHistoryService>();
         history.Load();
 
@@ -181,7 +184,7 @@ public partial class App : System.Windows.Application
     private void SetupTray()
     {
         var icon = LoadTrayIcon();
-        _trayIcon = new TrayIconService(icon);
+        _trayIcon = new TrayIconService(icon, BuildTrayLabels());
 
         _trayIcon.OpenRequested += (_, _) => ShowMainWindow();
         _trayIcon.CaptureRequested += (_, _) => _services!.GetRequiredService<ColorPickerCoordinator>().BeginCapture();
@@ -202,6 +205,14 @@ public partial class App : System.Windows.Application
 
         _trayIcon.SetStartWithWindowsChecked(_services!.GetRequiredService<IStartupService>().IsEnabled);
     }
+
+    private static TrayMenuLabels BuildTrayLabels() => new(
+        LocalizationService.Get("L.Tray.Open"),
+        LocalizationService.Get("L.Tray.Capture"),
+        LocalizationService.Get("L.Tray.CopyLast"),
+        LocalizationService.Get("L.Tray.StartWithWindows"),
+        LocalizationService.Get("L.Tray.Settings"),
+        LocalizationService.Get("L.Tray.Exit"));
 
     /// <summary>Loads the app's own icon from its embedded resources, falling back to a generic
     /// system icon so the tray never breaks if the asset is ever missing.</summary>
@@ -305,7 +316,8 @@ public partial class App : System.Windows.Application
             _services!.GetRequiredService<ISettingsRepository>(),
             _services!.GetRequiredService<IStartupService>(),
             _hotkeyService!,
-            _services!.GetRequiredService<UpdateService>());
+            _services!.GetRequiredService<UpdateService>(),
+            _services!.GetRequiredService<IThemeService>());
 
         var window = new SettingsWindow(viewModel) { Owner = _mainWindow };
         window.ShowDialog();
@@ -364,11 +376,7 @@ public partial class App : System.Windows.Application
 
     private void ExitApplication()
     {
-        _hotkeyService?.Dispose();
-        _trayIcon?.Dispose();
         _mainWindow?.AllowExit();
-        _singleInstance?.Dispose();
-        _services?.Dispose();
         Shutdown();
     }
 
@@ -402,7 +410,6 @@ public partial class App : System.Windows.Application
 
     protected override void OnExit(ExitEventArgs e)
     {
-        _hotkeyService?.Dispose();
         _trayIcon?.Dispose();
         _singleInstance?.Dispose();
         _services?.Dispose();

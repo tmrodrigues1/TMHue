@@ -22,7 +22,7 @@
                 Background="{DynamicResource Brush.SurfaceElevated}"
                 BorderBrush="{DynamicResource Brush.BorderStrong}" BorderThickness="1"
                 CornerRadius="12" Padding="16,9">
-            <TextBlock Text="Arraste para selecionar a região · Esc para cancelar"
+            <TextBlock Text="{DynamicResource L.Region.Hint}"
                        FontFamily="{StaticResource Font.Text}" FontSize="13"
                        Foreground="{DynamicResource Brush.TextPrimary}" />
         </Border>

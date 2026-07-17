@@ -2,6 +2,18 @@
 
 Todas as mudanças relevantes do TMHue serão registradas neste arquivo.
 
+## [1.2.1] - 2026-07-17
+
+### Novidades
+
+- Interface em dois idiomas: alterne entre Português (Brasil) e Inglês (US) diretamente nas configurações, sem reiniciar o aplicativo.
+- Tema claro e escuro: escolha a aparência que melhor combina com seu ambiente e mantenha uma experiência visual mais confortável durante o uso.
+
+### Melhorias
+
+- Extrator de paletas mais completo: agora identifica até 15 cores dominantes, oferecendo uma leitura mais rica e representativa das imagens.
+- Captura de região otimizada: grandes seleções são redimensionadas de forma inteligente durante a captura, reduzindo o consumo de memória sem comprometer a qualidade da paleta gerada.
+
 ## [1.0.0] - 2026-07-14
 
 - Instalador migrado do Inno Setup para Velopack: one-click por usuário, sem UAC, splash

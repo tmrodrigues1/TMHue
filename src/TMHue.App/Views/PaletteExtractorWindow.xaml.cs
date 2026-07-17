@@ -1,8 +1,8 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Media.Imaging;
 using TMHue.App.ViewModels;
+using TMHue.Windows.Sampling;
 
 namespace TMHue.App.Views;
 
@@ -93,9 +93,12 @@ public partial class PaletteExtractorWindow : Window
             // The selection overlay closes before capture, so the shot contains only the screen.
             await System.Threading.Tasks.Task.Delay(100);
 
-            var capture = CaptureScreenRegion(region.X, region.Y, region.Width, region.Height);
-            if (capture is not null)
+            if (ScreenRegionCapture.TryCapture(
+                    region.X, region.Y, region.Width, region.Height,
+                    out var capture) && capture is not null)
+            {
                 ViewModel.LoadFromCapture(capture);
+            }
         }
         finally
         {
@@ -105,35 +108,4 @@ public partial class PaletteExtractorWindow : Window
         }
     }
 
-    private static BitmapSource? CaptureScreenRegion(int x, int y, int width, int height)
-    {
-        try
-        {
-            using var bitmap = new System.Drawing.Bitmap(width, height,
-                System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-            using (var graphics = System.Drawing.Graphics.FromImage(bitmap))
-            {
-                graphics.CopyFromScreen(x, y, 0, 0, new System.Drawing.Size(width, height));
-            }
-
-            // PNG round-trip through memory: simplest lossless GDI bitmap -> BitmapSource bridge
-            // without an HBITMAP handle to manually release. One-shot, so the copy cost is fine.
-            using var stream = new MemoryStream();
-            bitmap.Save(stream, System.Drawing.Imaging.ImageFormat.Png);
-            stream.Position = 0;
-
-            var source = new BitmapImage();
-            source.BeginInit();
-            source.CacheOption = BitmapCacheOption.OnLoad;
-            source.StreamSource = stream;
-            source.EndInit();
-            source.Freeze();
-            return source;
-        }
-        catch
-        {
-            // Secure/off-screen regions can fail the BitBlt; the modal simply stays as it was.
-            return null;
-        }
-    }
 }

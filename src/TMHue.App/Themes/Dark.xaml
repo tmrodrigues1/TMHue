@@ -22,6 +22,12 @@
     <SolidColorBrush x:Key="Brush.CaptureGradient" Color="#FF17171A" />
     <SolidColorBrush x:Key="Brush.CaptureGradientHover" Color="#FF201F24" />
     <SolidColorBrush x:Key="Brush.CaptureGradientPressed" Color="#FF121215" />
+    <SolidColorBrush x:Key="Brush.CaptureButtonText" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="Brush.CaptureButtonBorder" Color="#26FFFFFF" />
+
+    <!-- Feedback colors: the same IndianRed/MediumSeaGreen the app always used on dark. -->
+    <SolidColorBrush x:Key="Brush.Error" Color="#FFCD5C5C" />
+    <SolidColorBrush x:Key="Brush.Success" Color="#FF3CB371" />
 
     <SolidColorBrush x:Key="Brush.OverlayScrim" Color="#80000000" />
     <SolidColorBrush x:Key="Brush.PreviewSurface" Color="#F50D0C12" />

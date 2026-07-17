@@ -2,6 +2,17 @@ using System.Windows.Forms;
 
 namespace TMHue.Windows.Notifications;
 
+/// <summary>Localized captions for the tray context menu. The tray lives in the Windows layer
+/// (WinForms), which has no access to WPF resource dictionaries, so the app hands the current
+/// strings in and re-hands them whenever the UI language changes.</summary>
+public sealed record TrayMenuLabels(
+    string Open,
+    string Capture,
+    string CopyLastColor,
+    string StartWithWindows,
+    string Settings,
+    string Exit);
+
 /// <summary>
 /// Owns the system tray icon and its context menu via System.Windows.Forms.NotifyIcon
 /// (wraps Shell_NotifyIcon). The app stays resident here even when the WPF window is closed.
@@ -10,7 +21,14 @@ public sealed class TrayIconService : IDisposable
 {
     private readonly NotifyIcon _notifyIcon;
 
-    public TrayIconService(Icon icon)
+    private readonly ToolStripMenuItem _open;
+    private readonly ToolStripMenuItem _capture;
+    private readonly ToolStripMenuItem _copyLast;
+    private readonly ToolStripMenuItem _startWithWindows;
+    private readonly ToolStripMenuItem _settings;
+    private readonly ToolStripMenuItem _exit;
+
+    public TrayIconService(Icon icon, TrayMenuLabels labels)
     {
         _notifyIcon = new NotifyIcon
         {
@@ -25,7 +43,36 @@ public sealed class TrayIconService : IDisposable
                 OpenRequested?.Invoke(this, EventArgs.Empty);
         };
 
-        BuildMenu();
+        _open = new ToolStripMenuItem();
+        _open.Click += (_, _) => OpenRequested?.Invoke(this, EventArgs.Empty);
+
+        _capture = new ToolStripMenuItem();
+        _capture.Click += (_, _) => CaptureRequested?.Invoke(this, EventArgs.Empty);
+
+        _copyLast = new ToolStripMenuItem();
+        _copyLast.Click += (_, _) => CopyLastColorRequested?.Invoke(this, EventArgs.Empty);
+
+        _startWithWindows = new ToolStripMenuItem { Name = "startWithWindows", CheckOnClick = true };
+        _startWithWindows.Click += (_, _) => StartWithWindowsToggled?.Invoke(this, _startWithWindows.Checked);
+
+        _settings = new ToolStripMenuItem();
+        _settings.Click += (_, _) => SettingsRequested?.Invoke(this, EventArgs.Empty);
+
+        _exit = new ToolStripMenuItem();
+        _exit.Click += (_, _) => ExitRequested?.Invoke(this, EventArgs.Empty);
+
+        var menu = new ContextMenuStrip();
+        menu.Items.Add(_open);
+        menu.Items.Add(_capture);
+        menu.Items.Add(_copyLast);
+        menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add(_startWithWindows);
+        menu.Items.Add(_settings);
+        menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add(_exit);
+        _notifyIcon.ContextMenuStrip = menu;
+
+        SetLabels(labels);
     }
 
     public event EventHandler? OpenRequested;
@@ -37,45 +84,17 @@ public sealed class TrayIconService : IDisposable
 
     public NotifyIcon NotifyIcon => _notifyIcon;
 
-    public void SetStartWithWindowsChecked(bool isChecked)
+    public void SetStartWithWindowsChecked(bool isChecked) => _startWithWindows.Checked = isChecked;
+
+    /// <summary>Applies (or re-applies, after a language change) the menu captions.</summary>
+    public void SetLabels(TrayMenuLabels labels)
     {
-        if (_notifyIcon.ContextMenuStrip?.Items["startWithWindows"] is ToolStripMenuItem item)
-            item.Checked = isChecked;
-    }
-
-    private void BuildMenu()
-    {
-        var menu = new ContextMenuStrip();
-
-        var open = new ToolStripMenuItem("Abrir TMHue");
-        open.Click += (_, _) => OpenRequested?.Invoke(this, EventArgs.Empty);
-        menu.Items.Add(open);
-
-        var capture = new ToolStripMenuItem("Capturar cor");
-        capture.Click += (_, _) => CaptureRequested?.Invoke(this, EventArgs.Empty);
-        menu.Items.Add(capture);
-
-        var copyLast = new ToolStripMenuItem("Copiar última cor");
-        copyLast.Click += (_, _) => CopyLastColorRequested?.Invoke(this, EventArgs.Empty);
-        menu.Items.Add(copyLast);
-
-        menu.Items.Add(new ToolStripSeparator());
-
-        var startWithWindows = new ToolStripMenuItem("Iniciar com o Windows") { Name = "startWithWindows", CheckOnClick = true };
-        startWithWindows.Click += (_, _) => StartWithWindowsToggled?.Invoke(this, startWithWindows.Checked);
-        menu.Items.Add(startWithWindows);
-
-        var settings = new ToolStripMenuItem("Configurações");
-        settings.Click += (_, _) => SettingsRequested?.Invoke(this, EventArgs.Empty);
-        menu.Items.Add(settings);
-
-        menu.Items.Add(new ToolStripSeparator());
-
-        var exit = new ToolStripMenuItem("Sair");
-        exit.Click += (_, _) => ExitRequested?.Invoke(this, EventArgs.Empty);
-        menu.Items.Add(exit);
-
-        _notifyIcon.ContextMenuStrip = menu;
+        _open.Text = labels.Open;
+        _capture.Text = labels.Capture;
+        _copyLast.Text = labels.CopyLastColor;
+        _startWithWindows.Text = labels.StartWithWindows;
+        _settings.Text = labels.Settings;
+        _exit.Text = labels.Exit;
     }
 
     public void Dispose()

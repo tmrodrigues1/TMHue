@@ -38,7 +38,7 @@
     <!-- Full-width gradient call-to-action, per the reference design. -->
     <Style x:Key="Button.Capture" TargetType="Button">
         <Setter Property="Background" Value="{DynamicResource Brush.CaptureGradient}" />
-        <Setter Property="Foreground" Value="White" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.CaptureButtonText}" />
         <Setter Property="FontFamily" Value="{StaticResource Font.Text}" />
         <Setter Property="FontSize" Value="17" />
         <Setter Property="FontWeight" Value="SemiBold" />
@@ -48,7 +48,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="Chrome" Background="{TemplateBinding Background}" CornerRadius="12"
-                            BorderBrush="#26FFFFFF" BorderThickness="1">
+                            BorderBrush="{DynamicResource Brush.CaptureButtonBorder}" BorderThickness="1">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>

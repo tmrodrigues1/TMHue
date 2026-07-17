@@ -53,6 +53,41 @@ public class PaletteExtractorTests
     }
 
     [Fact]
+    public void Extract_DominantColorWithShades_DoesNotCrowdOutMinorityColors()
+    {
+        // A dominant near-black region with per-pixel noise (like a screenshot background)
+        // plus small patches of genuinely different colors: the shades of black must merge
+        // into one entry so every distinct color still earns a palette slot.
+        var random = new Random(7);
+        var pixels = new List<RgbColor>();
+        for (var i = 0; i < 4000; i++)
+        {
+            var v = (byte)random.Next(0, 40);
+            pixels.Add(new RgbColor(v, v, (byte)random.Next(0, 40)));
+        }
+
+        var accents = new[]
+        {
+            new RgbColor(230, 200, 20),  // yellow
+            new RgbColor(140, 40, 200),  // purple
+            new RgbColor(240, 100, 170), // pink
+            new RgbColor(40, 90, 230),   // blue
+            new RgbColor(220, 40, 40),   // red
+            new RgbColor(40, 170, 60)    // green
+        };
+        foreach (var accent in accents)
+            pixels.AddRange(Enumerable.Repeat(accent, 100));
+
+        var palette = PaletteExtractor.Extract(pixels, 10);
+
+        foreach (var expected in accents)
+            Assert.Contains(palette, actual =>
+                Math.Abs(actual.Red - expected.Red) <= 20 &&
+                Math.Abs(actual.Green - expected.Green) <= 20 &&
+                Math.Abs(actual.Blue - expected.Blue) <= 20);
+    }
+
+    [Fact]
     public void Extract_DistinctClusters_RecoversEachCluster()
     {
         var colors = new[]

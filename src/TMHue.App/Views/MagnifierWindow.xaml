@@ -12,9 +12,9 @@
         SizeToContent="WidthAndHeight">
     <Border Background="#FF1B1B22" BorderBrush="#FF3A3A44" BorderThickness="1" CornerRadius="10" Padding="8">
         <StackPanel>
-            <TextBlock Text="Aperte ESC para cancelar" Foreground="#FF9A99A6" FontFamily="Segoe UI"
+            <TextBlock Text="{DynamicResource L.Magnifier.EscHint}" Foreground="#FF9A99A6" FontFamily="Segoe UI"
                        FontSize="11" HorizontalAlignment="Center" Margin="0,0,0,0" />
-            <TextBlock Text="Use Shift+Setas para mover o cursor" Foreground="#FF9A99A6" FontFamily="Segoe UI"
+            <TextBlock Text="{DynamicResource L.Magnifier.ArrowsHint}" Foreground="#FF9A99A6" FontFamily="Segoe UI"
                        FontSize="11" HorizontalAlignment="Center" Margin="0,0,0,8" />
             <Grid Width="132" Height="132">
                 <Border ClipToBounds="True" CornerRadius="4">

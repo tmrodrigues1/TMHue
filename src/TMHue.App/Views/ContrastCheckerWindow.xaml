@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:conv="clr-namespace:TMHue.App.Converters"
-        Title="Contraste (WCAG) — TMHue"
+        Title="{DynamicResource L.Contrast.WindowTitle}"
         Width="400"
         SizeToContent="Height"
         WindowStyle="None"
@@ -76,7 +76,7 @@
                                    HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <StackPanel VerticalAlignment="Center" Margin="10,0,0,0">
-                        <TextBlock Text="Contraste (WCAG)" Style="{StaticResource Text.Title}" FontSize="15" />
+                        <TextBlock Text="{DynamicResource L.Contrast.Title}" Style="{StaticResource Text.Title}" FontSize="15" />
                         <!-- Discreet reminder of the color format currently set as default. -->
                         <TextBlock Text="{Binding DefaultFormatLabel}" Style="{StaticResource Text.Caption}"
                                    FontSize="12" Foreground="{DynamicResource Brush.TextSecondary}" />
@@ -92,25 +92,25 @@
                         <ToolTip>
                             <StackPanel MaxWidth="250">
                                 <TextBlock TextWrapping="Wrap" LineHeight="17">
-                                    <Run Text="WCAG" FontWeight="SemiBold"
+                                    <Run Text="{DynamicResource L.Contrast.Tip1a}" FontWeight="SemiBold"
                                          Foreground="{DynamicResource Brush.HotkeyText}" /><Run
-                                         Text=" (Web Content Accessibility Guidelines) são as diretrizes internacionais de acessibilidade web, mantidas pelo W3C. Elas existem para garantir que pessoas com baixa visão ou daltonismo consigam ler o conteúdo." />
+                                         Text="{DynamicResource L.Contrast.Tip1b}" />
                                 </TextBlock>
                                 <TextBlock TextWrapping="Wrap" LineHeight="17" Margin="0,8,0,0">
-                                    <Run Text="Contraste WCAG" FontWeight="SemiBold"
+                                    <Run Text="{DynamicResource L.Contrast.Tip2a}" FontWeight="SemiBold"
                                          Foreground="{DynamicResource Brush.HotkeyText}" /><Run
-                                         Text=" mede o quão fácil é ler um texto sobre um fundo, com base nessas diretrizes." />
+                                         Text="{DynamicResource L.Contrast.Tip2b}" />
                                 </TextBlock>
                                 <TextBlock TextWrapping="Wrap" LineHeight="17" Margin="0,8,0,0">
-                                    <Run Text="Informe a cor do texto e a do fundo em HEX, RGB ou HSL (ou use o conta-gotas). " /><Run
-                                         Text="AA" FontWeight="SemiBold" Foreground="{DynamicResource Brush.HotkeyText}" /><Run
-                                         Text=" é o mínimo recomendado; " /><Run
-                                         Text="AAA" FontWeight="SemiBold" Foreground="{DynamicResource Brush.HotkeyText}" /><Run
-                                         Text=" é o nível reforçado. Texto grande (18pt+ ou 14pt+ em negrito) exige menos contraste." />
+                                    <Run Text="{DynamicResource L.Contrast.Tip3a}" /><Run
+                                         Text="{DynamicResource L.Contrast.Tip3b}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.HotkeyText}" /><Run
+                                         Text="{DynamicResource L.Contrast.Tip3c}" /><Run
+                                         Text="{DynamicResource L.Contrast.Tip3d}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.HotkeyText}" /><Run
+                                         Text="{DynamicResource L.Contrast.Tip3e}" />
                                 </TextBlock>
                                 <TextBlock TextWrapping="Wrap" LineHeight="17" Margin="0,8,0,0">
-                                    <Run Text="Para alterar o formato de cor padrão, acesse " /><Run
-                                         Text="Configurações" FontWeight="SemiBold" Foreground="{DynamicResource Brush.HotkeyText}" />.
+                                    <Run Text="{DynamicResource L.Contrast.Tip4a}" /><Run
+                                         Text="{DynamicResource L.Common.Settings}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.HotkeyText}" />.
                                 </TextBlock>
                             </StackPanel>
                         </ToolTip>
@@ -119,11 +119,11 @@
 
                 <Button Grid.Column="2" Style="{StaticResource Button.Close}" Content="&#xE713;"
                         FontFamily="Segoe MDL2 Assets" FontSize="12" Width="30" Height="30"
-                        Margin="0,0,6,0" Click="OnSettingsClick" ToolTip="Configurações" />
+                        Margin="0,0,6,0" Click="OnSettingsClick" ToolTip="{DynamicResource L.Common.Settings}" />
 
                 <Button Grid.Column="3" Style="{StaticResource Button.Close}" Content="&#xE8BB;"
                         FontFamily="Segoe MDL2 Assets" FontSize="10" Width="30" Height="30"
-                        Click="OnCloseClick" ToolTip="Fechar" />
+                        Click="OnCloseClick" ToolTip="{DynamicResource L.Common.Close}" />
             </Grid>
 
             <!-- Color inputs card -->
@@ -136,8 +136,8 @@
                          clipped in a half-width column. Rows are kept tight (small swatch, small
                          gaps) so the extra row doesn't grow the window beyond the main app's size. -->
                     <StackPanel>
-                        <TextBlock Text="Cor do texto" Style="{StaticResource Text.Caption}" FontSize="11"
-                                   Foreground="White" Margin="0,0,0,4" />
+                        <TextBlock Text="{DynamicResource L.Contrast.TextColor}" Style="{StaticResource Text.Caption}" FontSize="11"
+                                   Foreground="{DynamicResource Brush.TextPrimary}" Margin="0,0,0,4" />
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -146,7 +146,7 @@
                             <Border Grid.Column="0" Width="24" Height="24" CornerRadius="7"
                                     BorderBrush="{DynamicResource Brush.BorderStrong}" BorderThickness="1"
                                     Background="{Binding TextBrush}" Margin="0,0,6,0" Cursor="Hand"
-                                    ToolTip="Capturar cor do texto com o conta-gotas">
+                                    ToolTip="{DynamicResource L.Contrast.PickTextTip}">
                                 <Border.InputBindings>
                                     <MouseBinding MouseAction="LeftClick" Command="{Binding PickTextColorCommand}" />
                                 </Border.InputBindings>
@@ -159,8 +159,8 @@
                     </StackPanel>
 
                     <StackPanel Margin="0,6,0,0">
-                        <TextBlock Text="Cor do fundo" Style="{StaticResource Text.Caption}" FontSize="11"
-                                   Foreground="White" Margin="0,0,0,4" />
+                        <TextBlock Text="{DynamicResource L.Contrast.BackgroundColor}" Style="{StaticResource Text.Caption}" FontSize="11"
+                                   Foreground="{DynamicResource Brush.TextPrimary}" Margin="0,0,0,4" />
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -169,7 +169,7 @@
                             <Border Grid.Column="0" Width="24" Height="24" CornerRadius="7"
                                     BorderBrush="{DynamicResource Brush.BorderStrong}" BorderThickness="1"
                                     Background="{Binding BackgroundBrush}" Margin="0,0,6,0" Cursor="Hand"
-                                    ToolTip="Capturar cor do fundo com o conta-gotas">
+                                    ToolTip="{DynamicResource L.Contrast.PickBackgroundTip}">
                                 <Border.InputBindings>
                                     <MouseBinding MouseAction="LeftClick" Command="{Binding PickBackgroundColorCommand}" />
                                 </Border.InputBindings>
@@ -181,7 +181,7 @@
                         </Grid>
                     </StackPanel>
 
-                    <TextBlock Text="{Binding ErrorMessage}" Foreground="IndianRed" FontSize="12"
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="{DynamicResource Brush.Error}" FontSize="12"
                                TextWrapping="Wrap" Margin="0,8,0,0"
                                Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibility}}" />
                 </StackPanel>
@@ -204,7 +204,7 @@
                     BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
                     CornerRadius="14" Padding="16,8" Margin="0,14,0,0">
                 <StackPanel>
-                    <TextBlock Text="Resultado WCAG" Style="{StaticResource Text.Title}" FontSize="13" Margin="0,0,0,6" />
+                    <TextBlock Text="{DynamicResource L.Contrast.Result}" Style="{StaticResource Text.Title}" FontSize="13" Margin="0,0,0,6" />
 
                     <Grid Margin="0,0,0,3">
                         <Grid.ColumnDefinitions>
@@ -212,7 +212,7 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="Texto normal — AA" Style="{StaticResource Text.Body}" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="0" Text="{DynamicResource L.Contrast.NormalAa}" Style="{StaticResource Text.Body}" VerticalAlignment="Center" />
                         <TextBlock Grid.Column="2" Text="{Binding PassesAaNormalText, Converter={StaticResource PassFailToText}}"
                                    Foreground="{Binding PassesAaNormalText, Converter={StaticResource PassFailToBrush}}"
                                    FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" />
@@ -224,7 +224,7 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="Texto normal — AAA" Style="{StaticResource Text.Body}" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="0" Text="{DynamicResource L.Contrast.NormalAaa}" Style="{StaticResource Text.Body}" VerticalAlignment="Center" />
                         <TextBlock Grid.Column="2" Text="{Binding PassesAaaNormalText, Converter={StaticResource PassFailToText}}"
                                    Foreground="{Binding PassesAaaNormalText, Converter={StaticResource PassFailToBrush}}"
                                    FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" />
@@ -236,7 +236,7 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="Texto grande — AA" Style="{StaticResource Text.Body}" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="0" Text="{DynamicResource L.Contrast.LargeAa}" Style="{StaticResource Text.Body}" VerticalAlignment="Center" />
                         <TextBlock Grid.Column="2" Text="{Binding PassesAaLargeText, Converter={StaticResource PassFailToText}}"
                                    Foreground="{Binding PassesAaLargeText, Converter={StaticResource PassFailToBrush}}"
                                    FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" />
@@ -248,7 +248,7 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="Texto grande — AAA" Style="{StaticResource Text.Body}" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="0" Text="{DynamicResource L.Contrast.LargeAaa}" Style="{StaticResource Text.Body}" VerticalAlignment="Center" />
                         <TextBlock Grid.Column="2" Text="{Binding PassesAaaLargeText, Converter={StaticResource PassFailToText}}"
                                    Foreground="{Binding PassesAaaLargeText, Converter={StaticResource PassFailToBrush}}"
                                    FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" />
@@ -258,10 +258,10 @@
                          currently shown, so the window's height never changes. -->
                     <StackPanel Margin="0,10,0,0" MinHeight="30"
                                 Visibility="{Binding SuggestionText, Converter={StaticResource StringToHiddenVisibility}}">
-                        <TextBlock Text="Recomendação:" FontFamily="{StaticResource Font.Text}" FontSize="11"
-                                   FontWeight="SemiBold" Foreground="White" />
+                        <TextBlock Text="{DynamicResource L.Contrast.Recommendation}" FontFamily="{StaticResource Font.Text}" FontSize="11"
+                                   FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextPrimary}" />
                         <TextBlock Text="{Binding SuggestionText}" Style="{StaticResource Text.Caption}" FontSize="11"
-                                   Foreground="White" TextWrapping="Wrap" Margin="0,2,0,0" />
+                                   Foreground="{DynamicResource Brush.TextPrimary}" TextWrapping="Wrap" Margin="0,2,0,0" />
                     </StackPanel>
                 </StackPanel>
             </Border>

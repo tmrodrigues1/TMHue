@@ -1,0 +1,211 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+
+    <!-- Comum -->
+    <sys:String x:Key="L.Common.Close">Fechar</sys:String>
+    <sys:String x:Key="L.Common.Minimize">Minimizar</sys:String>
+    <sys:String x:Key="L.Common.Settings">Configurações</sys:String>
+    <sys:String x:Key="L.Common.Change">Alterar</sys:String>
+    <sys:String x:Key="L.Common.ClickToCopy">Clique para copiar</sys:String>
+    <sys:String x:Key="L.Common.ClickToCopyFmt">Clique para copiar {0}</sys:String>
+    <sys:String x:Key="L.Common.CopyFmt">Copiar {0}</sys:String>
+
+    <!-- Janela principal -->
+    <sys:String x:Key="L.Main.Tagline">Cores em um clique</sys:String>
+    <sys:String x:Key="L.Main.Capture">Capturar uma cor</sys:String>
+    <sys:String x:Key="L.Main.Contrast">Contraste (WCAG)</sys:String>
+    <sys:String x:Key="L.Main.ContrastTip">Verificar contraste WCAG entre duas cores</sys:String>
+    <sys:String x:Key="L.Main.Harmonies">Gerar Harmonias</sys:String>
+    <sys:String x:Key="L.Main.HarmoniesTip">Gerar harmonias de cor a partir de uma cor base</sys:String>
+    <sys:String x:Key="L.Main.ExtractPalettes">Extrair Paletas</sys:String>
+    <sys:String x:Key="L.Main.ExtractTip">Extrair a paleta de cores de uma imagem ou de uma região da tela</sys:String>
+    <sys:String x:Key="L.Main.History">Últimas cores</sys:String>
+    <sys:String x:Key="L.Main.HistoryTip1a">Clique com o botão </sys:String>
+    <sys:String x:Key="L.Main.HistoryTip1b">direito</sys:String>
+    <sys:String x:Key="L.Main.HistoryTip1c"> para fixar uma cor, mantendo-a na lista mesmo capturando outras.</sys:String>
+    <sys:String x:Key="L.Main.HistoryTip2a">Clique com o botão </sys:String>
+    <sys:String x:Key="L.Main.HistoryTip2b">esquerdo</sys:String>
+    <sys:String x:Key="L.Main.HistoryTip2c"> para copiar a cor para a área de transferência.</sys:String>
+    <sys:String x:Key="L.Main.HistoryTip3a">Você pode fixar até </sys:String>
+    <sys:String x:Key="L.Main.HistoryTip3b">3 cores</sys:String>
+    <sys:String x:Key="L.Main.HistoryTip3c">: elas não são alteradas nem substituídas.</sys:String>
+    <sys:String x:Key="L.Main.MoreToggleTip">Mostrar/ocultar mais cores capturadas</sys:String>
+    <sys:String x:Key="L.Main.SwatchTip">Clique esquerdo: copiar · Clique direito: fixar (máx. 3)</sys:String>
+    <sys:String x:Key="L.Main.Pinned">Fixada</sys:String>
+    <sys:String x:Key="L.Main.KeyboardShortcuts">Atalhos do teclado</sys:String>
+    <sys:String x:Key="L.Main.HotkeyCopy">Copiar cor</sys:String>
+    <sys:String x:Key="L.Main.HotkeyOpenApp">Abrir aplicativo</sys:String>
+    <sys:String x:Key="L.Main.HotkeyContrast">Contraste (WCAG)</sys:String>
+    <sys:String x:Key="L.Main.HotkeyHarmony">Harmonias de cor</sys:String>
+    <sys:String x:Key="L.Main.HotkeyPalette">Extrair paleta</sys:String>
+    <sys:String x:Key="L.Main.ChangeHotkeyHintA">Para alterar um atalho, acesse </sys:String>
+    <sys:String x:Key="L.Main.ClearHistoryTip">Limpar todas as cores</sys:String>
+    <sys:String x:Key="L.Main.MorePanelEmpty">As próximas cores capturadas aparecem aqui.</sys:String>
+    <sys:String x:Key="L.Main.Back">Voltar</sys:String>
+    <sys:String x:Key="L.Main.BackTip">Voltar para a tela principal</sys:String>
+    <sys:String x:Key="L.Main.DevelopedBy">Desenvolvido por </sys:String>
+    <sys:String x:Key="L.Main.SeeMore">Ver mais &gt;</sys:String>
+    <sys:String x:Key="L.Main.SeeLess">Ver menos</sys:String>
+
+    <!-- Configurações -->
+    <sys:String x:Key="L.Settings.WindowTitle">Configurações — TMHue</sys:String>
+    <sys:String x:Key="L.Settings.StartWithWindows">Iniciar com o Windows</sys:String>
+    <sys:String x:Key="L.Settings.CloseToTray">Fechar para a bandeja do sistema</sys:String>
+    <sys:String x:Key="L.Settings.ShowCaptureNotification">Mostrar confirmação após capturar</sys:String>
+    <sys:String x:Key="L.Settings.ShowMagnifier">Mostrar lupa ao capturar</sys:String>
+    <sys:String x:Key="L.Settings.Theme">Tema</sys:String>
+    <sys:String x:Key="L.Settings.ThemeTip1a">Sistema</sys:String>
+    <sys:String x:Key="L.Settings.ThemeTip1b"> segue o modo claro/escuro configurado no Windows automaticamente.</sys:String>
+    <sys:String x:Key="L.Settings.ThemeTip2a">Claro / Escuro</sys:String>
+    <sys:String x:Key="L.Settings.ThemeTip2b"> fixam a aparência do TMHue independentemente do Windows.</sys:String>
+    <sys:String x:Key="L.Settings.Language">Idioma</sys:String>
+    <sys:String x:Key="L.Settings.LanguageTip">A mudança é aplicada imediatamente em todas as janelas.</sys:String>
+    <sys:String x:Key="L.Settings.SampleTitle">Amostra de cor</sys:String>
+    <sys:String x:Key="L.Settings.SampleTip1a">Pixel exato</sys:String>
+    <sys:String x:Key="L.Settings.SampleTip1b"> lê a cor exata do pixel sob o cursor — ideal para acertar um ponto específico, como a borda de um ícone.</sys:String>
+    <sys:String x:Key="L.Settings.SampleTip2a">Média 5×5 (recomendado) / 11×11</sys:String>
+    <sys:String x:Key="L.Settings.SampleTip2b"> calculam a cor predominante de uma pequena área ao redor do cursor, evitando variações causadas por ruído de compressão, anti-aliasing ou gradientes — ideal para pegar a cor de uma superfície.</sys:String>
+    <sys:String x:Key="L.Settings.SampleTip3">Aplicado automaticamente e em tempo real ao passar o mouse — não precisa reabrir a captura.</sys:String>
+    <sys:String x:Key="L.Settings.CopyFormatTitle">Formato de cópia</sys:String>
+    <sys:String x:Key="L.Settings.CopyTip0">Formato padrão ao capturar uma cor:</sys:String>
+    <sys:String x:Key="L.Settings.CopyTip1a">1 HEX</sys:String>
+    <sys:String x:Key="L.Settings.CopyTip1b"> — #RRGGBB, o padrão da web e de ferramentas de design.</sys:String>
+    <sys:String x:Key="L.Settings.CopyTip2a">2 RGB</sys:String>
+    <sys:String x:Key="L.Settings.CopyTip2b"> — rgb(r, g, b), os três canais em decimal.</sys:String>
+    <sys:String x:Key="L.Settings.CopyTip3a">3 HSL</sys:String>
+    <sys:String x:Key="L.Settings.CopyTip3b"> — matiz, saturação e luminosidade, útil para ajustar tons.</sys:String>
+    <sys:String x:Key="L.Settings.CopyTip4">Durante a captura, pressione a tecla correspondente para usar outro formato apenas naquela cópia.</sys:String>
+    <sys:String x:Key="L.Settings.Hotkeys">Atalhos globais</sys:String>
+    <sys:String x:Key="L.Settings.Updates">Atualizações</sys:String>
+    <sys:String x:Key="L.Settings.Check">Verificar</sys:String>
+    <sys:String x:Key="L.Settings.NotNow">Agora não</sys:String>
+    <sys:String x:Key="L.Settings.Update">Atualizar</sys:String>
+    <sys:String x:Key="L.Settings.ThemeSystem">Sistema</sys:String>
+    <sys:String x:Key="L.Settings.ThemeLight">Claro</sys:String>
+    <sys:String x:Key="L.Settings.ThemeDark">Escuro</sys:String>
+    <sys:String x:Key="L.Settings.SampleExact">Pixel exato</sys:String>
+    <sys:String x:Key="L.Settings.Sample5">Média 5×5</sys:String>
+    <sys:String x:Key="L.Settings.Sample11">Média 11×11</sys:String>
+    <sys:String x:Key="L.Settings.PressCombination">Pressione a combinação…</sys:String>
+    <sys:String x:Key="L.Settings.CurrentVersionFmt">Versão atual: {0}</sys:String>
+    <sys:String x:Key="L.Settings.CooldownFmt">Nova verificação em {0}.</sys:String>
+    <sys:String x:Key="L.Settings.UpdateDeferred">Atualização adiada.</sys:String>
+    <sys:String x:Key="L.Settings.UpdateFailed">Falha ao atualizar. Tente novamente.</sys:String>
+    <sys:String x:Key="L.Settings.Checking">Verificando…</sys:String>
+    <sys:String x:Key="L.Settings.NewVersionFmt">Nova versão disponível: {0}</sys:String>
+    <sys:String x:Key="L.Settings.UpToDate">Você está atualizado.</sys:String>
+    <sys:String x:Key="L.Settings.WaitToCheck">Aguarde para verificar novamente.</sys:String>
+    <sys:String x:Key="L.Settings.InstalledOnly">Disponível apenas na versão instalada.</sys:String>
+    <sys:String x:Key="L.Settings.CheckFailed">Não foi possível verificar.</sys:String>
+    <sys:String x:Key="L.Settings.HotkeyInUse">Essa combinação já está em uso por outro aplicativo.</sys:String>
+
+    <!-- Extrair paleta -->
+    <sys:String x:Key="L.Palette.WindowTitle">Extrair paleta — TMHue</sys:String>
+    <sys:String x:Key="L.Palette.Title">Extrair paleta</sys:String>
+    <sys:String x:Key="L.Palette.Subtitle">Cores dominantes de imagem ou tela</sys:String>
+    <sys:String x:Key="L.Palette.Tip1a">Arraste uma imagem</sys:String>
+    <sys:String x:Key="L.Palette.Tip1b"> para esta janela ou capture uma região da tela: o TMHue extrai até 15 cores dominantes automaticamente.</sys:String>
+    <sys:String x:Key="L.Palette.Tip2a">Todo o processamento é </sys:String>
+    <sys:String x:Key="L.Palette.Tip2b">local</sys:String>
+    <sys:String x:Key="L.Palette.Tip2c">: nada é enviado para a internet — sua imagem nunca sai do computador.</sys:String>
+    <sys:String x:Key="L.Palette.Tip3a">Clique em qualquer cor da paleta para </sys:String>
+    <sys:String x:Key="L.Palette.Tip3b">copiar</sys:String>
+    <sys:String x:Key="L.Palette.Tip3c"> no seu formato padrão.</sys:String>
+    <sys:String x:Key="L.Palette.Tip4a">Atenção:</sys:String>
+    <sys:String x:Key="L.Palette.Tip4b"> ao fechar esta janela, a imagem e a paleta extraída são descartadas — nada fica salvo.</sys:String>
+    <sys:String x:Key="L.Palette.DropHere">Arraste uma imagem aqui</sys:String>
+    <sys:String x:Key="L.Palette.CaptureRegion">Capturar região da tela</sys:String>
+    <sys:String x:Key="L.Palette.CaptureRegionTip">Selecionar uma região da tela para extrair a paleta</sys:String>
+    <sys:String x:Key="L.Palette.ClearImage">Limpar imagem</sys:String>
+    <sys:String x:Key="L.Palette.ClearImageTip">Descartar a imagem e a paleta atuais</sys:String>
+    <sys:String x:Key="L.Palette.Extracted">Paleta extraída</sys:String>
+    <sys:String x:Key="L.Palette.EmptyHint">As cores dominantes aparecem aqui após carregar uma imagem ou capturar a tela.</sys:String>
+    <sys:String x:Key="L.Palette.ReadError">Não foi possível ler a imagem. Use PNG, JPG, BMP, GIF ou WEBP.</sys:String>
+    <sys:String x:Key="L.Palette.NoColors">Nenhuma cor pôde ser extraída dessa imagem.</sys:String>
+
+    <!-- Contraste (WCAG) -->
+    <sys:String x:Key="L.Contrast.WindowTitle">Contraste (WCAG) — TMHue</sys:String>
+    <sys:String x:Key="L.Contrast.Title">Contraste (WCAG)</sys:String>
+    <sys:String x:Key="L.Contrast.Tip1a">WCAG</sys:String>
+    <sys:String x:Key="L.Contrast.Tip1b"> (Web Content Accessibility Guidelines) são as diretrizes internacionais de acessibilidade web, mantidas pelo W3C. Elas existem para garantir que pessoas com baixa visão ou daltonismo consigam ler o conteúdo.</sys:String>
+    <sys:String x:Key="L.Contrast.Tip2a">Contraste WCAG</sys:String>
+    <sys:String x:Key="L.Contrast.Tip2b"> mede o quão fácil é ler um texto sobre um fundo, com base nessas diretrizes.</sys:String>
+    <sys:String x:Key="L.Contrast.Tip3a">Informe a cor do texto e a do fundo em HEX, RGB ou HSL (ou use o conta-gotas). </sys:String>
+    <sys:String x:Key="L.Contrast.Tip3b">AA</sys:String>
+    <sys:String x:Key="L.Contrast.Tip3c"> é o mínimo recomendado; </sys:String>
+    <sys:String x:Key="L.Contrast.Tip3d">AAA</sys:String>
+    <sys:String x:Key="L.Contrast.Tip3e"> é o nível reforçado. Texto grande (18pt+ ou 14pt+ em negrito) exige menos contraste.</sys:String>
+    <sys:String x:Key="L.Contrast.Tip4a">Para alterar o formato de cor padrão, acesse </sys:String>
+    <sys:String x:Key="L.Contrast.TextColor">Cor do texto</sys:String>
+    <sys:String x:Key="L.Contrast.BackgroundColor">Cor do fundo</sys:String>
+    <sys:String x:Key="L.Contrast.PickTextTip">Capturar cor do texto com o conta-gotas</sys:String>
+    <sys:String x:Key="L.Contrast.PickBackgroundTip">Capturar cor do fundo com o conta-gotas</sys:String>
+    <sys:String x:Key="L.Contrast.Result">Resultado WCAG</sys:String>
+    <sys:String x:Key="L.Contrast.NormalAa">Texto normal — AA</sys:String>
+    <sys:String x:Key="L.Contrast.NormalAaa">Texto normal — AAA</sys:String>
+    <sys:String x:Key="L.Contrast.LargeAa">Texto grande — AA</sys:String>
+    <sys:String x:Key="L.Contrast.LargeAaa">Texto grande — AAA</sys:String>
+    <sys:String x:Key="L.Contrast.Recommendation">Recomendação:</sys:String>
+    <sys:String x:Key="L.Contrast.Pass">Aprova</sys:String>
+    <sys:String x:Key="L.Contrast.Fail">Reprova</sys:String>
+    <sys:String x:Key="L.Contrast.InvalidColor">Cor inválida. Use HEX, RGB ou HSL.</sys:String>
+    <sys:String x:Key="L.Contrast.DefaultFormatFmt">Formato padrão: {0}</sys:String>
+    <sys:String x:Key="L.Contrast.Darken">Escureça</sys:String>
+    <sys:String x:Key="L.Contrast.Lighten">Clareie</sys:String>
+    <sys:String x:Key="L.Contrast.SuggestionFmt">{0} o texto em {1:0}% para passar no AA (texto normal).</sys:String>
+
+    <!-- Harmonias -->
+    <sys:String x:Key="L.Harmony.WindowTitle">Harmonias de cor — TMHue</sys:String>
+    <sys:String x:Key="L.Harmony.Title">Harmonias de cor</sys:String>
+    <sys:String x:Key="L.Harmony.Subtitle">Sugestões a partir de uma cor base</sys:String>
+    <sys:String x:Key="L.Harmony.Tip1a">Escolheu uma cor e não sabe quais combinam com ela?</sys:String>
+    <sys:String x:Key="L.Harmony.Tip1b"> É exatamente isso que esta ferramenta resolve: informe uma cor e o TMHue sugere paletas prontas que combinam entre si.</sys:String>
+    <sys:String x:Key="L.Harmony.Tip2a">Como usar:</sys:String>
+    <sys:String x:Key="L.Harmony.Tip2b"> digite a cor no campo abaixo ou clique no quadradinho colorido para capturá-la de qualquer lugar da tela com o conta-gotas.</sys:String>
+    <sys:String x:Key="L.Harmony.Tip3a">Cada seção é um estilo de combinação — passe o mouse no </sys:String>
+    <sys:String x:Key="L.Harmony.Tip3b">?</sys:String>
+    <sys:String x:Key="L.Harmony.Tip3c"> de cada uma para entender quando usá-la. Clique em qualquer cor para copiá-la.</sys:String>
+    <sys:String x:Key="L.Harmony.Tip4">Ideal para montar a identidade visual de um site, apresentação ou design sem depender do olho.</sys:String>
+    <sys:String x:Key="L.Harmony.BaseColor">Cor base</sys:String>
+    <sys:String x:Key="L.Harmony.PickBaseTip">Capturar a cor base com o conta-gotas (com mini zoom)</sys:String>
+    <sys:String x:Key="L.Harmony.Complementary">Complementar</sys:String>
+    <sys:String x:Key="L.Harmony.ComplementaryDesc">A cor oposta no círculo cromático (180° de distância). Cria o contraste mais forte possível — ideal para destacar botões e chamadas de ação.</sys:String>
+    <sys:String x:Key="L.Harmony.Analogous">Análoga</sys:String>
+    <sys:String x:Key="L.Harmony.AnalogousDesc">Cores vizinhas no círculo cromático (30° para cada lado). Combinam naturalmente entre si e criam visuais suaves e harmoniosos.</sys:String>
+    <sys:String x:Key="L.Harmony.Triadic">Triádica</sys:String>
+    <sys:String x:Key="L.Harmony.TriadicDesc">Três cores igualmente espaçadas no círculo cromático (120° entre si). Equilibra contraste e harmonia — paletas vibrantes sem perder coesão.</sys:String>
+    <sys:String x:Key="L.Harmony.Tetradic">Tetrádica</sys:String>
+    <sys:String x:Key="L.Harmony.TetradicDesc">Quatro cores igualmente espaçadas no círculo cromático (90° entre si). Oferece mais variedade; funciona melhor quando uma cor domina e as outras acentuam.</sys:String>
+    <sys:String x:Key="L.Harmony.Tints">Tons claros (tints)</sys:String>
+    <sys:String x:Key="L.Harmony.TintsDesc">A mesma cor progressivamente mais clara, em direção ao branco. Útil para fundos, estados de hover e hierarquia visual.</sys:String>
+    <sys:String x:Key="L.Harmony.Shades">Tons escuros (shades)</sys:String>
+    <sys:String x:Key="L.Harmony.ShadesDesc">A mesma cor progressivamente mais escura, em direção ao preto. Útil para textos, bordas e estados pressionados.</sys:String>
+
+    <!-- Toasts / atualização -->
+    <sys:String x:Key="L.Toast.Copied"> copiada</sys:String>
+    <sys:String x:Key="L.UpdateToast.AvailableFmt">TMHue {0} disponível</sys:String>
+    <sys:String x:Key="L.UpdateToast.Downloading">Baixando atualização…</sys:String>
+    <sys:String x:Key="L.UpdateToast.DownloadingFmt">Baixando atualização… {0}%</sys:String>
+    <sys:String x:Key="L.UpdateProgress.WindowTitle">Atualizando — TMHue</sys:String>
+    <sys:String x:Key="L.UpdateProgress.Title">Atualizando o TMHue</sys:String>
+    <sys:String x:Key="L.UpdateProgress.Downloading">Baixando a nova versão…</sys:String>
+    <sys:String x:Key="L.UpdateProgress.Source">Fonte: release oficial no GitHub (HTTPS)</sys:String>
+    <sys:String x:Key="L.UpdateProgress.RestartNote">O aplicativo será reiniciado automaticamente ao concluir.</sys:String>
+    <sys:String x:Key="L.UpdateProgress.Done">Concluído — reiniciando…</sys:String>
+    <sys:String x:Key="L.UpdateProgress.Installing">Instalando…</sys:String>
+
+    <!-- Lupa / captura de região -->
+    <sys:String x:Key="L.Magnifier.EscHint">Aperte ESC para cancelar</sys:String>
+    <sys:String x:Key="L.Magnifier.ArrowsHint">Use Shift+Setas para mover o cursor</sys:String>
+    <sys:String x:Key="L.Region.Hint">Arraste para selecionar a região · Esc para cancelar</sys:String>
+
+    <!-- Bandeja -->
+    <sys:String x:Key="L.Tray.Open">Abrir TMHue</sys:String>
+    <sys:String x:Key="L.Tray.Capture">Capturar cor</sys:String>
+    <sys:String x:Key="L.Tray.CopyLast">Copiar última cor</sys:String>
+    <sys:String x:Key="L.Tray.StartWithWindows">Iniciar com o Windows</sys:String>
+    <sys:String x:Key="L.Tray.Settings">Configurações</sys:String>
+    <sys:String x:Key="L.Tray.Exit">Sair</sys:String>
+
+</ResourceDictionary>

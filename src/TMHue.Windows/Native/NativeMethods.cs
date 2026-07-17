@@ -29,6 +29,19 @@ internal static partial class NativeMethods
     [LibraryImport("gdi32.dll")]
     public static partial uint GetPixel(nint hDC, int x, int y);
 
+    [LibraryImport("gdi32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool StretchBlt(
+        nint hdcDest, int xDest, int yDest, int widthDest, int heightDest,
+        nint hdcSource, int xSource, int ySource, int widthSource, int heightSource,
+        uint rasterOperation);
+
+    [LibraryImport("gdi32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool DeleteObject(nint hObject);
+
+    public const uint SRCCOPY = 0x00CC0020;
+
     public static (byte R, byte G, byte B) ColorRefToRgb(uint colorRef) =>
         ((byte)(colorRef & 0x000000FF), (byte)((colorRef & 0x0000FF00) >> 8), (byte)((colorRef & 0x00FF0000) >> 16));
 

@@ -17,7 +17,7 @@ public partial class UpdateToastWindow : Window
     {
         InitializeComponent();
         _updateService = updateService;
-        MessageText.Text = $"TMHue {version} disponível";
+        MessageText.Text = LocalizationService.Format("L.UpdateToast.AvailableFmt", version);
 
         Loaded += (_, _) => PlaceAboveTaskbar();
     }
@@ -36,16 +36,16 @@ public partial class UpdateToastWindow : Window
 
         UpdateButton.IsEnabled = false;
         DismissButton.IsEnabled = false;
-        MessageText.Text = "Baixando atualização…";
+        MessageText.Text = LocalizationService.Get("L.UpdateToast.Downloading");
 
         var ok = await _updateService.DownloadAndApplyAsync(percent =>
-            Dispatcher.Invoke(() => MessageText.Text = $"Baixando atualização… {percent}%"));
+            Dispatcher.Invoke(() => MessageText.Text = LocalizationService.Format("L.UpdateToast.DownloadingFmt", percent)));
 
         // Em sucesso o app reinicia e esta janela morre junto; só chegamos aqui em falha.
         if (!ok)
         {
             _downloading = false;
-            MessageText.Text = "Falha ao atualizar. Tente novamente.";
+            MessageText.Text = LocalizationService.Get("L.Settings.UpdateFailed");
             UpdateButton.IsEnabled = true;
             DismissButton.IsEnabled = true;
         }
