@@ -64,9 +64,9 @@
     <sys:String x:Key="L.Settings.SampleTitle">Amostra de cor</sys:String>
     <sys:String x:Key="L.Settings.SampleTip1a">Pixel exato</sys:String>
     <sys:String x:Key="L.Settings.SampleTip1b"> lê a cor exata do pixel sob o cursor — ideal para acertar um ponto específico, como a borda de um ícone.</sys:String>
-    <sys:String x:Key="L.Settings.SampleTip2a">Média 5×5 (recomendado) / 11×11</sys:String>
-    <sys:String x:Key="L.Settings.SampleTip2b"> calculam a cor predominante de uma pequena área ao redor do cursor, evitando variações causadas por ruído de compressão, anti-aliasing ou gradientes — ideal para pegar a cor de uma superfície.</sys:String>
-    <sys:String x:Key="L.Settings.SampleTip3">Aplicado automaticamente e em tempo real ao passar o mouse — não precisa reabrir a captura.</sys:String>
+    <sys:String x:Key="L.Settings.SampleTip2a">Cor da região — 5×5 / 11×11</sys:String>
+    <sys:String x:Key="L.Settings.SampleTip2b"> escolhe um pixel real da área próximo da mediana dos canais. Empates favorecem o centro; pixels fora da tela são ignorados. Linhas finas podem dar lugar à cor de fundo.</sys:String>
+    <sys:String x:Key="L.Settings.SampleTip3">O mesmo modo é usado com mouse e teclado. A lupa marca a área considerada. Pixel exato é o padrão para novas configurações.</sys:String>
     <sys:String x:Key="L.Settings.CopyFormatTitle">Formato de cópia</sys:String>
     <sys:String x:Key="L.Settings.CopyTip0">Formato padrão ao capturar uma cor:</sys:String>
     <sys:String x:Key="L.Settings.CopyTip1a">1 HEX</sys:String>
@@ -84,9 +84,9 @@
     <sys:String x:Key="L.Settings.ThemeSystem">Sistema</sys:String>
     <sys:String x:Key="L.Settings.ThemeLight">Claro</sys:String>
     <sys:String x:Key="L.Settings.ThemeDark">Escuro</sys:String>
-    <sys:String x:Key="L.Settings.SampleExact">Pixel exato</sys:String>
-    <sys:String x:Key="L.Settings.Sample5">Média 5×5</sys:String>
-    <sys:String x:Key="L.Settings.Sample11">Média 11×11</sys:String>
+    <sys:String x:Key="L.Settings.SampleExact">1×1 (pixel exato)</sys:String>
+    <sys:String x:Key="L.Settings.Sample5">5×5</sys:String>
+    <sys:String x:Key="L.Settings.Sample11">11×11</sys:String>
     <sys:String x:Key="L.Settings.PressCombination">Pressione a combinação…</sys:String>
     <sys:String x:Key="L.Settings.CurrentVersionFmt">Versão atual: {0}</sys:String>
     <sys:String x:Key="L.Settings.CooldownFmt">Nova verificação em {0}.</sys:String>
@@ -197,7 +197,7 @@
 
     <!-- Lupa / captura de região -->
     <sys:String x:Key="L.Magnifier.EscHint">Aperte ESC para cancelar</sys:String>
-    <sys:String x:Key="L.Magnifier.ArrowsHint">Use Shift+Setas para mover o cursor</sys:String>
+    <sys:String x:Key="L.Magnifier.ArrowsHint">Setas: 1 px · Shift+setas: próxima cor</sys:String>
     <sys:String x:Key="L.Region.Hint">Arraste para selecionar a região · Esc para cancelar</sys:String>
 
     <!-- Bandeja -->
@@ -208,4 +208,23 @@
     <sys:String x:Key="L.Tray.Settings">Configurações</sys:String>
     <sys:String x:Key="L.Tray.Exit">Sair</sys:String>
 
+    <sys:String x:Key="L.Capture.ExclusionFailed">Não foi possível excluir as janelas do conta-gotas da captura. A seleção foi cancelada para evitar uma cor incorreta.</sys:String>
+    <sys:String x:Key="L.Capture.ReadFailed">Não foi possível ler os pixels desta posição. Nenhuma cor foi salva ou copiada. Tente novamente.</sys:String>
+    <sys:String x:Key="L.Magnifier.RenderedSource">Valores capturados · 8 bits</sys:String>
+    <sys:String x:Key="L.Settings.PickerOptions">Opções avançadas de captura</sys:String>
+    <sys:String x:Key="L.Settings.Tolerance">Tolerância de Shift+setas</sys:String>
+    <sys:String x:Key="L.Capture.FreezeFailed">Não foi possível congelar a tela. A seleção foi cancelada. O modo congelado limita o uso de memória a 256 MB; reduza a resolução ou use a captura ao vivo.</sys:String>
+    <sys:String x:Key="L.Settings.SrgbOutput">Converter SDR para sRGB</sys:String>
+    <sys:String x:Key="L.Capture.ColorConversionFailed">Não foi possível converter a amostra para sRGB. Confira o perfil do monitor e use SDR. Para HDR, selecione Valores capturados, ciente do limite de 8 bits. Nenhuma cor foi salva ou copiada.</sys:String>
+    <sys:String x:Key="L.Magnifier.HdrSource">HDR/WCG · captura limitada a 8 bits</sys:String>
+    <sys:String x:Key="L.Settings.PrecisionCursor">Usar mira de precisão</sys:String>
+    <sys:String x:Key="L.Settings.PrecisionTip">Substitui o conta-gotas por uma cruz com o centro aberto, que indica o pixel selecionado sem cobri-lo. Facilita alinhar a captura em bordas, ícones e detalhes pequenos. A leitura da cor mantém a mesma precisão.</sys:String>
+    <sys:String x:Key="L.Settings.FreezeScreen">Congelar a tela ao selecionar</sys:String>
+    <sys:String x:Key="L.Magnifier.SrgbSource">Convertido para sRGB · SDR</sys:String>
+    <sys:String x:Key="L.Settings.ColorOutput">Saída de cor</sys:String>
+    <sys:String x:Key="L.Settings.ToleranceTip">Ignora diferenças até esse valor por canal. Zero detecta qualquer mudança. Setas simples avançam um pixel.</sys:String>
+    <sys:String x:Key="L.Magnifier.Frozen">Tela congelada</sys:String>
+    <sys:String x:Key="L.Settings.FreezeTip">Mantém uma imagem estática da tela durante a seleção. É útil para escolher cores em vídeos, animações ou conteúdo que muda: a cor escolhida não se altera antes do clique.&#x0a;&#x0a;O ponteiro e a lupa continuam acompanhando seu movimento sobre essa imagem. Desativada, a opção permite capturar o conteúdo ao vivo. A imagem congelada fica apenas na memória e é descartada ao sair.</sys:String>
+    <sys:String x:Key="L.Settings.RenderedOutput">Valores capturados (padrão)</sys:String>
+    <sys:String x:Key="L.Settings.ColorOutputTip">Define como a cor capturada será mostrada, copiada e salva.&#x0a;&#x0a;Valores capturados (padrão): mantém os números RGB lidos da tela. Use para reproduzir ou comparar esses valores sem conversão.&#x0a;&#x0a;Converter SDR para sRGB: usa o perfil de cor do monitor para converter a captura ao padrão sRGB, comum em sites e imagens. É útil ao levar cores para outras ferramentas que usam sRGB. Requer um perfil válido e uma tela em SDR.&#x0a;&#x0a;A captura usa 8 bits por canal. Em HDR, há limitações; o valor capturado pode diferir da cor original do arquivo.</sys:String>
 </ResourceDictionary>

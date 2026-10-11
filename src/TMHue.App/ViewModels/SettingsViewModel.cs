@@ -6,7 +6,7 @@ namespace TMHue.App.ViewModels;
 
 /// <summary>Backs the settings modal: general preferences, appearance (theme/language),
 /// capture options, global hotkeys and updates.</summary>
-public sealed class SettingsViewModel : ViewModelBase
+public sealed partial class SettingsViewModel : ViewModelBase
 {
     // Short enough to fit the hotkeys card's single-line rows without pushing the button.
     private static string CapturePromptText => LocalizationService.Get("L.Settings.PressCombination");

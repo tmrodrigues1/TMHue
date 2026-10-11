@@ -10,6 +10,7 @@ public sealed record CapturedColor(
     DateTimeOffset CapturedAt)
 {
     public bool IsPinned { get; init; }
+    public string? CaptureSource { get; init; }
 
     public static CapturedColor FromRgb(RgbColor rgb, bool uppercaseHex, DateTimeOffset? capturedAt = null) =>
         new(rgb.ToHex(uppercaseHex), rgb.Red, rgb.Green, rgb.Blue, capturedAt ?? DateTimeOffset.Now);

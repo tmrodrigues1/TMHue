@@ -10,6 +10,10 @@
         Focusable="True">
     <!-- Alpha-1 background: fully transparent pixels on an AllowsTransparency window are
          click-through at the Win32 layered-window level, so clicks outside the app would reach
-         the desktop instead of this overlay. Alpha 1 is invisible but hit-testable. -->
-    <Grid Background="#01000000" />
+         the desktop instead of this overlay. Alpha 1 is hit-testable and capture affinity
+         excludes its contribution from sampled pixels. -->
+    <Grid Background="#01000000">
+        <Image x:Name="FrozenImage" Visibility="Collapsed" Stretch="Fill"
+               RenderOptions.BitmapScalingMode="NearestNeighbor" />
+    </Grid>
 </Window>

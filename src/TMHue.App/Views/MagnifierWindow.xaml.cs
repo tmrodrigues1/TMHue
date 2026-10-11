@@ -18,6 +18,7 @@ namespace TMHue.App.Views;
 /// </summary>
 public partial class MagnifierWindow : Window
 {
+    public CaptureExclusionResult CaptureExclusionStatus { get; private set; }
     public const int RegionSide = 11;
 
     // One reusable 11x11 bitmap scaled up by the Image element; writing 121 ints into it per
@@ -27,6 +28,12 @@ public partial class MagnifierWindow : Window
 
     private int _physicalWidth;
     private int _physicalHeight;
+    private bool _hasPixels;
+    private string? _monitorDevice;
+    private int _sampleSide;
+    private (int X, int Y, int Width, int Height)? _placement;
+    internal int BitmapUpdateCount { get; private set; }
+    internal string DisplayedValue => HexLabel.Text;
 
     public MagnifierWindow()
     {
@@ -34,7 +41,11 @@ public partial class MagnifierWindow : Window
         PixelImage.Source = _bitmap;
 
         SourceInitialized += (_, _) =>
-            OverlayPlacement.MakeClickThroughAndNonActivating(new WindowInteropHelper(this).Handle);
+        {
+            var handle = new WindowInteropHelper(this).Handle;
+            OverlayPlacement.MakeClickThroughAndNonActivating(handle);
+            CaptureExclusionStatus = CaptureExclusion.Apply(handle);
+        };
 
         // The lens has a fixed layout; measuring once avoids an ActualWidth/DPI computation on
         // every mouse move.
@@ -56,25 +67,45 @@ public partial class MagnifierWindow : Window
     /// <summary>Renders the centered <see cref="RegionSide"/>² sub-square of a region that may be
     /// larger than the lens (the coordinator captures one region sized for both the lens and the
     /// user's sampling area, instead of one screen capture each).</summary>
-    public void UpdateContent(RgbColor[,] region, int regionSide, RgbColor centerColor, CopyFormat activeFormat)
+    public void UpdateContent(ScreenSample sample, RgbColor centerColor, CopyFormat activeFormat, int sampleSide)
     {
-        var offset = (regionSide - RegionSide) / 2;
+        var changed = !_hasPixels;
+        var offset = (sample.Side - RegionSide) / 2;
         for (var row = 0; row < RegionSide; row++)
         {
             for (var col = 0; col < RegionSide; col++)
             {
-                var c = region[offset + row, offset + col];
-                _pixelBuffer[row * RegionSide + col] = (c.Red << 16) | (c.Green << 8) | c.Blue;
+                var c = sample.Pixels[offset + row, offset + col];
+                var packed = sample.Valid[offset + row, offset + col]
+                    ? (c.Red << 16) | (c.Green << 8) | c.Blue
+                    : ((row + col) % 2 == 0 ? 0x454550 : 0x252530);
+                var index = row * RegionSide + col;
+                changed |= _pixelBuffer[index] != packed;
+                _pixelBuffer[index] = packed;
             }
         }
 
-        _bitmap.WritePixels(
-            new Int32Rect(0, 0, RegionSide, RegionSide),
-            _pixelBuffer,
-            RegionSide * 4,
-            0);
+        if (changed)
+        {
+            _bitmap.WritePixels(new Int32Rect(0, 0, RegionSide, RegionSide), _pixelBuffer, RegionSide * 4, 0);
+            BitmapUpdateCount++;
+            _hasPixels = true;
+        }
 
         HexLabel.Text = centerColor.Format(activeFormat);
+        if (_sampleSide != sampleSide)
+        {
+            _sampleSide = sampleSide;
+            SampleBoundary.Width = SampleBoundary.Height = sampleSide * 12;
+            SampleOutline.Width = SampleOutline.Height = sampleSide * 12;
+            SampleLabel.Text = TMHue.App.Infrastructure.LocalizationService.Get(sampleSide switch
+            { 5 => "L.Settings.Sample5", 11 => "L.Settings.Sample11", _ => "L.Settings.SampleExact" });
+        }
+        var sourceKey = sample.ColorOutput == CaptureColorOutput.Srgb ? "L.Magnifier.SrgbSource"
+            : sample.AdvancedColorActive is true ? "L.Magnifier.HdrSource" : "L.Magnifier.RenderedSource";
+        var description = TMHue.App.Infrastructure.LocalizationService.Get(sourceKey);
+        if (sample.IsFrozen) description += " · " + TMHue.App.Infrastructure.LocalizationService.Get("L.Magnifier.Frozen");
+        if (SourceLabel.Text != description) SourceLabel.Text = description;
         UpdateFormatHint(activeFormat);
     }
 
@@ -134,15 +165,32 @@ public partial class MagnifierWindow : Window
         var hwnd = new WindowInteropHelper(this).Handle;
         if (hwnd == nint.Zero || _physicalWidth == 0) return;
 
-        var bounds = VirtualScreenBounds.GetCurrent();
+        var screen = System.Windows.Forms.Screen.FromPoint(new(physicalX, physicalY));
+        var b = screen.Bounds;
+        if (!b.Contains(physicalX, physicalY)) return;
+        if (_monitorDevice != screen.DeviceName)
+        {
+            _monitorDevice = screen.DeviceName;
+            OverlayPlacement.PlaceAt(hwnd, b.Left + 24, b.Top + 24);
+        }
+        UpdateLayout(); // layout is dirty only on a DPI or readout-size change
+        var scale = OverlayPlacement.GetWindowScale(hwnd);
+        _physicalWidth = (int)Math.Ceiling(ActualWidth * scale);
+        _physicalHeight = (int)Math.Ceiling(ActualHeight * scale);
+        var bounds = new TMHue.Core.Models.PixelBounds(b.Left, b.Top, b.Width, b.Height);
+        var position = bounds.PlaceLens(physicalX, physicalY, _physicalWidth, _physicalHeight);
+        var placement = (position.X, position.Y, _physicalWidth, _physicalHeight);
+        if (_placement != placement)
+        {
+            _placement = placement;
+            OverlayPlacement.PlaceAt(hwnd, position.X, position.Y);
+        }
+    }
 
-        const int offset = 24;
-        var x = physicalX + offset;
-        var y = physicalY + offset;
-
-        if (x + _physicalWidth > bounds.Right) x = physicalX - offset - _physicalWidth;
-        if (y + _physicalHeight > bounds.Bottom) y = physicalY - offset - _physicalHeight;
-
-        OverlayPlacement.PlaceAt(hwnd, x, y);
+    protected override void OnDpiChanged(DpiScale oldDpi, DpiScale newDpi)
+    {
+        base.OnDpiChanged(oldDpi, newDpi);
+        _physicalWidth = (int)Math.Ceiling(ActualWidth * newDpi.DpiScaleX);
+        _physicalHeight = (int)Math.Ceiling(ActualHeight * newDpi.DpiScaleY);
     }
 }

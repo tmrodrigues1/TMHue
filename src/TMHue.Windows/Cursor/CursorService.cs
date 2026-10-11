@@ -9,6 +9,9 @@ public sealed class CursorService
 {
     private readonly string _resourceRelativePath;
     private System.Windows.Input.Cursor? _eyedropperCursor;
+    private System.Windows.Input.Cursor? _precisionCursor;
+
+    public System.Windows.Input.Cursor GetPrecisionCursor() => _precisionCursor ??= PrecisionCursor.Create();
 
     public CursorService(string resourceRelativePath)
     {

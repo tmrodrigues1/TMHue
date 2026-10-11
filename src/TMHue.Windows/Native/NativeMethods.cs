@@ -12,13 +12,20 @@ internal static partial class NativeMethods
         public int Y;
     }
 
-    [LibraryImport("user32.dll")]
+    [LibraryImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static partial bool GetPhysicalCursorPos(out POINT point);
 
     [LibraryImport("user32.dll")]
+    public static partial uint GetDpiForWindow(nint window);
+
+    [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static partial bool SetCursorPos(int x, int y);
+
+    [LibraryImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool ClientToScreen(nint hWnd, ref POINT point);
 
     [LibraryImport("user32.dll")]
     public static partial nint GetDC(nint hWnd);
@@ -73,9 +80,13 @@ internal static partial class NativeMethods
     public const uint MOD_WIN = 0x0008;
 
     // --- Capture affinity ---
-    [LibraryImport("user32.dll")]
+    [LibraryImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static partial bool SetWindowDisplayAffinity(nint hWnd, uint dwAffinity);
+
+    [LibraryImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool GetWindowDisplayAffinity(nint hWnd, out uint affinity);
 
     public const uint WDA_NONE = 0x0;
     public const uint WDA_EXCLUDEFROMCAPTURE = 0x11;

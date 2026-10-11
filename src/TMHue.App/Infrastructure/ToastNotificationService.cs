@@ -9,6 +9,8 @@ namespace TMHue.App.Infrastructure;
 /// </summary>
 public sealed class ToastNotificationService : INotificationService
 {
+    public void ShowCaptureFailure(string message) => System.Windows.MessageBox.Show(
+        message, "TMHue", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
     public void ShowCaptureConfirmation(string hex, string? displayText = null)
     {
         var toast = new CaptureToastWindow(hex, displayText ?? hex);

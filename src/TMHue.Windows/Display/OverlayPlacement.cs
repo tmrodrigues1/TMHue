@@ -26,8 +26,7 @@ public static class OverlayPlacement
 
     private const uint SWP_NOSIZE = 0x0001;
 
-    public static void ExcludeFromCapture(nint hwnd) =>
-        NativeMethods.SetWindowDisplayAffinity(hwnd, NativeMethods.WDA_EXCLUDEFROMCAPTURE);
+    public static CaptureExclusionResult ExcludeFromCapture(nint hwnd) => CaptureExclusion.Apply(hwnd);
 
     /// <summary>Marks a window click-through and non-activating, so it can float on top of
     /// another window (e.g. the picker overlay) without stealing its mouse capture or focus.</summary>
@@ -40,7 +39,8 @@ public static class OverlayPlacement
 
     public static (int X, int Y) GetPhysicalCursorPosition()
     {
-        NativeMethods.GetPhysicalCursorPos(out var point);
+        if (!NativeMethods.GetPhysicalCursorPos(out var point))
+            throw new System.ComponentModel.Win32Exception(System.Runtime.InteropServices.Marshal.GetLastPInvokeError());
         return (point.X, point.Y);
     }
 
@@ -48,4 +48,10 @@ public static class OverlayPlacement
     /// hardware move (WM_MOUSEMOVE to whatever's under the cursor), so the existing pointer-moved
     /// pipeline picks it up without any extra plumbing.</summary>
     public static void SetCursorPosition(int x, int y) => NativeMethods.SetCursorPos(x, y);
+
+    public static void PlaceMonitorWindow(nint window, TMHue.Core.Models.PixelBounds bounds) =>
+        NativeMethods.SetWindowPos(window, NativeMethods.HWND_TOPMOST, bounds.Left, bounds.Top,
+            bounds.Width, bounds.Height, NativeMethods.SWP_NOACTIVATE);
+
+    public static double GetWindowScale(nint window) => Math.Max(96, NativeMethods.GetDpiForWindow(window)) / 96d;
 }

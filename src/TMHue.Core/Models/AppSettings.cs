@@ -17,11 +17,15 @@ public sealed class AppSettings
     public bool ShowCaptureNotification { get; set; } = true;
 
     public bool ShowMagnifier { get; set; } = true;
+    public bool UsePrecisionCursor { get; set; }
+    public bool FreezeScreenWhilePicking { get; set; }
+    /// <summary>Maximum channel difference ignored by Shift+arrows. Simple arrows remain 1px.</summary>
+    public int ColorChangeTolerance { get; set; } = 2;
+    public CaptureColorOutput ColorOutput { get; set; } = CaptureColorOutput.Rendered;
 
-    /// <summary>Side (in pixels) of the square region averaged into the captured/hovered color.
-    /// 1 means the exact pixel under the cursor; 5 or 11 take the median of a small area, which
-    /// is steadier against compression noise, anti-aliasing and gradients.</summary>
-    public int SampleAreaSize { get; set; } = 5;
+    /// <summary>1 selects the exact captured pixel. 5/11 select an actual regional pixel
+    /// nearest to the channel median; existing persisted preferences are preserved.</summary>
+    public int SampleAreaSize { get; set; } = 1;
 
     public HotkeyDefinition Hotkey { get; set; } = HotkeyDefinition.Default;
 

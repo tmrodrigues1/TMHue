@@ -11,6 +11,28 @@ public partial class SettingsWindow : Window
     {
         InitializeComponent();
         DataContext = viewModel;
+        Closed += (_, _) => viewModel.CancelCaptureHotkey();
+        SizeChanged += (_, _) => KeepWithinWorkingArea();
+        Loaded += (_, _) =>
+        {
+            var screen = System.Windows.Forms.Screen.FromHandle(new System.Windows.Interop.WindowInteropHelper(this).Handle);
+            var dpi = System.Windows.Media.VisualTreeHelper.GetDpi(this);
+            MaxHeight = Math.Max(200, screen.WorkingArea.Height / dpi.DpiScaleY - 24);
+            KeepWithinWorkingArea();
+        };
+    }
+
+    private void KeepWithinWorkingArea()
+    {
+        if (!IsLoaded) return;
+        var screen = System.Windows.Forms.Screen.FromHandle(new System.Windows.Interop.WindowInteropHelper(this).Handle);
+        var dpi = System.Windows.Media.VisualTreeHelper.GetDpi(this);
+        var origin = PointToScreen(new System.Windows.Point(0, 0));
+        var minimumTop = screen.WorkingArea.Top + 12;
+        var maximumTop = Math.Max(minimumTop, screen.WorkingArea.Bottom - ActualHeight * dpi.DpiScaleY - 12);
+        var targetTop = Math.Clamp(origin.Y, minimumTop, maximumTop);
+        if (Math.Abs(targetTop - origin.Y) >= 1)
+            Top += (targetTop - origin.Y) / dpi.DpiScaleY;
     }
 
     private void OnTitleBarDrag(object sender, MouseButtonEventArgs e)
@@ -40,6 +62,21 @@ public partial class SettingsWindow : Window
 
         viewModel.BeginCaptureHotkey(hotkeyId);
         Focus();
+    }
+
+    private void OnSettingsSectionExpanded(object sender, RoutedEventArgs e)
+    {
+        if (!ReferenceEquals(e.OriginalSource, sender)) return;
+        if (ReferenceEquals(sender, AdvancedOptionsSection))
+            GlobalHotkeysSection.IsExpanded = false;
+        else if (ReferenceEquals(sender, GlobalHotkeysSection))
+            AdvancedOptionsSection.IsExpanded = false;
+    }
+
+    private void OnHotkeysCollapsed(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is SettingsViewModel viewModel)
+            viewModel.CancelCaptureHotkey();
     }
 
     protected override void OnPreviewKeyDown(System.Windows.Input.KeyEventArgs e)

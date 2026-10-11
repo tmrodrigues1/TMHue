@@ -24,11 +24,18 @@
                            RenderOptions.BitmapScalingMode="NearestNeighbor"
                            SnapsToDevicePixels="True" />
                 </Border>
-                <!-- Center-cell crosshair: 132 / 11 = 12px per cell, so a 12x12 centered border
-                     lines up exactly with the middle cell without any extra bookkeeping. -->
-                <Border Width="12" Height="12" BorderBrush="White" BorderThickness="2"
+                <!-- 12 DIP per cell; outline the configured 1/5/11-pixel sampling area. -->
+                <Border x:Name="SampleOutline" Width="12" Height="12" BorderBrush="Black" BorderThickness="3"
+                        HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" />
+                <Border x:Name="SampleBoundary" Width="12" Height="12" BorderBrush="White" BorderThickness="1"
+                        HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" />
+                <Border Width="12" Height="12" BorderBrush="#FFEACC48" BorderThickness="1"
                         HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" />
             </Grid>
+            <TextBlock x:Name="SampleLabel" Foreground="#FF9A99A6" FontSize="11"
+                       HorizontalAlignment="Center" Margin="0,6,0,0" />
+            <TextBlock x:Name="SourceLabel" Foreground="#FF9A99A6" FontSize="10" MaxWidth="240"
+                       TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center" Margin="0,4,0,0" />
             <TextBlock x:Name="HexLabel" Text="#000000" Foreground="White" FontFamily="Consolas"
                        FontSize="12" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,8,0,0" />
             <TextBlock x:Name="FormatHint" FontFamily="Segoe UI" FontSize="10"

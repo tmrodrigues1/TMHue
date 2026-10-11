@@ -1,150 +1,113 @@
+using System.ComponentModel;
+using System.Runtime.InteropServices;
 using TMHue.Core.Interfaces;
+using TMHue.Core.Models;
 using TMHue.Core.ValueObjects;
+using TMHue.Core.Services;
 using TMHue.Windows.Native;
 
 namespace TMHue.Windows.Sampling;
 
-/// <summary>
-/// Reads individual pixels via GDI (GetDC + GetPixel). Deliberately avoids full-screen capture:
-/// the app only ever needs a handful of pixels around the cursor, never a frame buffer.
-/// </summary>
-public sealed class ScreenColorSampler : IScreenColorSampler
+/// <summary>Bounded GDI captures on the UI thread. Reuses buffers, clips to actual monitors,
+/// and never returns a previous frame when a native operation fails.</summary>
+public sealed class ScreenColorSampler : IScreenColorSampler, IDisposable
 {
+    private System.Drawing.Bitmap? _bitmap;
+    private System.Drawing.Graphics? _graphics;
+    private byte[]? _bytes;
+    private ScreenSample? _sample;
+    private bool _disposed;
+    private readonly ScreenLineSampler _line = new();
+
     public bool TryReadPixel(int physicalX, int physicalY, out RgbColor color)
     {
-        var hdc = NativeMethods.GetDC(0);
-        if (hdc == 0)
-        {
-            color = default;
-            return false;
-        }
-
-        try
-        {
-            var colorRef = NativeMethods.GetPixel(hdc, physicalX, physicalY);
-            if (colorRef == NativeMethods.CR_INVALID)
-            {
-                color = default;
-                return false;
-            }
-
-            var (r, g, b) = NativeMethods.ColorRefToRgb(colorRef);
-            color = new RgbColor(r, g, b);
-            return true;
-        }
-        finally
-        {
-            NativeMethods.ReleaseDC(0, hdc);
-        }
+        color = default;
+        if (!TryReadRegion(physicalX, physicalY, 1, out var sample)) return false;
+        return sample!.TrySelectColor(1, out color);
     }
 
-    public bool TryFindNextColorChange(int startX, int startY, int stepX, int stepY, int maxSteps, out (int X, int Y) result)
+    public bool TryReadRegion(int centerX, int centerY, int side, out ScreenSample? sample)
     {
-        result = default;
-
-        var hdc = NativeMethods.GetDC(0);
-        if (hdc == 0) return false;
-
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        sample = null;
+        if (side is < 1 or > 11 || side % 2 == 0)
+            throw new ArgumentOutOfRangeException(nameof(side));
+        EnsureBuffers(side);
+        _sample!.Clear();
+        var monitors = System.Windows.Forms.Screen.AllScreens;
+        if (!monitors.Any(m => m.Bounds.Contains(centerX, centerY))) return false;
+        var requested = new System.Drawing.Rectangle(centerX - side / 2, centerY - side / 2, side, side);
         try
         {
-            var startRef = NativeMethods.GetPixel(hdc, startX, startY);
-            if (startRef == NativeMethods.CR_INVALID) return false;
-
-            var x = startX;
-            var y = startY;
-
-            for (var i = 0; i < maxSteps; i++)
+            _graphics!.Clear(System.Drawing.Color.Black);
+            foreach (var monitor in monitors)
             {
-                x += stepX;
-                y += stepY;
-
-                var colorRef = NativeMethods.GetPixel(hdc, x, y);
-                if (colorRef == NativeMethods.CR_INVALID) return false;
-
-                if (colorRef != startRef)
-                {
-                    result = (x, y);
-                    return true;
-                }
+                var clipped = System.Drawing.Rectangle.Intersect(requested, monitor.Bounds);
+                if (clipped.IsEmpty) continue;
+                var dx = clipped.Left - requested.Left;
+                var dy = clipped.Top - requested.Top;
+                _graphics.CopyFromScreen(clipped.Left, clipped.Top, dx, dy, clipped.Size,
+                    System.Drawing.CopyPixelOperation.SourceCopy);
+                for (var row = dy; row < dy + clipped.Height; row++)
+                for (var col = dx; col < dx + clipped.Width; col++)
+                    _sample.Valid[row, col] = true;
             }
 
-            return false;
-        }
-        finally
-        {
-            NativeMethods.ReleaseDC(0, hdc);
-        }
-    }
-
-    // ReadRegion runs on every mouse move during a capture, so the bitmap, the pixel byte
-    // buffer and the returned matrix are all reused between calls (recreated only when the
-    // requested side changes). Callers must consume the returned matrix before the next call;
-    // the sampler is only ever used from the UI thread's mouse-move pipeline.
-    private System.Drawing.Bitmap? _regionBitmap;
-    private System.Drawing.Graphics? _regionGraphics;
-    private byte[]? _regionPixels;
-    private RgbColor[,]? _region;
-    private int _regionSide;
-
-    /// <summary>Grabs the whole region with a single BitBlt (CopyFromScreen) instead of one
-    /// GetPixel round-trip per pixel: each GetPixel is a synchronous driver call, and side²
-    /// of them per mouse-move made the magnifier visibly stutter.</summary>
-    public RgbColor[,] ReadRegion(int centerX, int centerY, int side)
-    {
-        var half = side / 2;
-        EnsureRegionBuffers(side);
-        var result = _region!;
-
-        try
-        {
-            _regionGraphics!.CopyFromScreen(centerX - half, centerY - half, 0, 0, new System.Drawing.Size(side, side));
-
-            var data = _regionBitmap!.LockBits(
-                new System.Drawing.Rectangle(0, 0, side, side),
+            var data = _bitmap!.LockBits(new System.Drawing.Rectangle(0, 0, side, side),
                 System.Drawing.Imaging.ImageLockMode.ReadOnly,
                 System.Drawing.Imaging.PixelFormat.Format32bppArgb);
             try
             {
-                var pixels = _regionPixels!;
-                System.Runtime.InteropServices.Marshal.Copy(data.Scan0, pixels, 0, data.Stride * side);
-
+                Marshal.Copy(data.Scan0, _bytes!, 0, data.Stride * side);
                 for (var row = 0; row < side; row++)
+                for (var col = 0; col < side; col++)
                 {
-                    var rowStart = row * data.Stride;
-                    for (var col = 0; col < side; col++)
-                    {
-                        var i = rowStart + col * 4; // BGRA
-                        result[row, col] = new RgbColor(pixels[i + 2], pixels[i + 1], pixels[i]);
-                    }
+                    if (!_sample.Valid[row, col]) continue;
+                    var i = row * data.Stride + col * 4;
+                    _sample.Pixels[row, col] = new RgbColor(_bytes![i + 2], _bytes[i + 1], _bytes[i]);
                 }
             }
-            finally
-            {
-                _regionBitmap.UnlockBits(data);
-            }
+            finally { _bitmap.UnlockBits(data); }
+            sample = _sample;
+            return true;
         }
-        catch
+        catch (Exception error) when (error is Win32Exception or ExternalException or ArgumentException)
         {
-            // Off-screen/secure regions: leave the cells as they are (black on first use,
-            // the previous frame's pixels afterwards — the buffer is reused between calls).
+            _sample.Clear();
+            return false;
         }
-
-        return result;
     }
 
-    private void EnsureRegionBuffers(int side)
+    public bool TryFindNextColorChange(int startX, int startY, int stepX, int stepY,
+        int maxSteps, out (int X, int Y) result)
+        => TryFindNextColorChange(startX, startY, stepX, stepY, maxSteps, 0, out result);
+
+    public bool TryFindNextColorChange(int startX, int startY, int stepX, int stepY,
+        int maxSteps, int tolerance, out (int X, int Y) result)
     {
-        if (_regionSide == side && _regionBitmap is not null) return;
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        result = default;
+        if (Math.Abs(stepX) + Math.Abs(stepY) != 1 || maxSteps is < 1 or > 80 || tolerance is < 0 or > 32)
+            throw new ArgumentOutOfRangeException(nameof(maxSteps));
+        return _line.TryFind(startX, startY, stepX, stepY, maxSteps, tolerance, out result);
+    }
 
-        _regionGraphics?.Dispose();
-        _regionBitmap?.Dispose();
+    private void EnsureBuffers(int side)
+    {
+        if (_sample?.Side == side) return;
+        _graphics?.Dispose(); _bitmap?.Dispose();
+        _bitmap = new(side, side, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+        _graphics = System.Drawing.Graphics.FromImage(_bitmap);
+        _bytes = new byte[side * side * 4];
+        _sample = new(side);
+    }
 
-        _regionBitmap = new System.Drawing.Bitmap(side, side, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-        _regionGraphics = System.Drawing.Graphics.FromImage(_regionBitmap);
-        // Stride is rounded up to a 4-byte boundary, which 32bpp already satisfies; side * 4
-        // therefore matches the stride LockBits will report for this bitmap.
-        _regionPixels = new byte[side * 4 * side];
-        _region = new RgbColor[side, side];
-        _regionSide = side;
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        _line.Dispose();
+        _graphics?.Dispose(); _bitmap?.Dispose();
+        _graphics = null; _bitmap = null; _bytes = null; _sample = null;
     }
 }

@@ -32,7 +32,11 @@ public sealed class SettingsRepository : ISettingsRepository
         try
         {
             var json = ReadFileWithSizeLimit();
-            return JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? AppSettings.CreateDefault();
+            var settings = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? AppSettings.CreateDefault();
+            if (settings.SampleAreaSize is not (1 or 5 or 11)) settings.SampleAreaSize = 1;
+            settings.ColorChangeTolerance = Math.Clamp(settings.ColorChangeTolerance, 0, 32);
+            if (!Enum.IsDefined(settings.ColorOutput)) settings.ColorOutput = CaptureColorOutput.Rendered;
+            return settings;
         }
         catch (Exception)
         {

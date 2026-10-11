@@ -1,0 +1,66 @@
+<UserControl x:Class="TMHue.App.Views.PickerOptionsControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <Style x:Key="HelpIcon" TargetType="TextBlock">
+            <Setter Property="Text" Value="&#xE9CE;" />
+            <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="6,0,0,0" />
+            <Setter Property="Cursor" Value="Help" />
+            <Setter Property="ToolTipService.InitialShowDelay" Value="0" />
+            <Setter Property="ToolTipService.ShowDuration" Value="60000" />
+        </Style>
+    </UserControl.Resources>
+        <StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <CheckBox Content="{DynamicResource L.Settings.PrecisionCursor}" IsChecked="{Binding UsePrecisionCursor}" />
+                <TextBlock Style="{StaticResource HelpIcon}">
+                    <TextBlock.ToolTip>
+                        <ToolTip>
+                            <TextBlock Text="{DynamicResource L.Settings.PrecisionTip}" TextWrapping="Wrap" LineHeight="17" MaxWidth="260" />
+                        </ToolTip>
+                    </TextBlock.ToolTip>
+                </TextBlock>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                <CheckBox Content="{DynamicResource L.Settings.FreezeScreen}" IsChecked="{Binding FreezeScreenWhilePicking}" />
+                <TextBlock Style="{StaticResource HelpIcon}">
+                    <TextBlock.ToolTip>
+                        <ToolTip>
+                            <TextBlock Text="{DynamicResource L.Settings.FreezeTip}" TextWrapping="Wrap" LineHeight="17" MaxWidth="260" />
+                        </ToolTip>
+                    </TextBlock.ToolTip>
+                </TextBlock>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                <TextBlock Text="{DynamicResource L.Settings.Tolerance}" Style="{StaticResource Text.Body}" />
+                <TextBlock Text="{Binding ColorChangeTolerance}" Style="{StaticResource Text.Body}" Margin="8,0,0,0" />
+                <TextBlock Style="{StaticResource HelpIcon}">
+                    <TextBlock.ToolTip>
+                        <ToolTip>
+                            <TextBlock Text="{DynamicResource L.Settings.ToleranceTip}" TextWrapping="Wrap" LineHeight="17" MaxWidth="260" />
+                        </ToolTip>
+                    </TextBlock.ToolTip>
+                </TextBlock>
+            </StackPanel>
+            <Slider Minimum="0" Maximum="32" TickFrequency="1" IsSnapToTickEnabled="True"
+                    Value="{Binding ColorChangeTolerance}" Margin="0,0,0,12" />
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                <TextBlock Text="{DynamicResource L.Settings.ColorOutput}" Style="{StaticResource Text.Title}" FontSize="13" />
+                <TextBlock Style="{StaticResource HelpIcon}">
+                    <TextBlock.ToolTip>
+                        <ToolTip>
+                            <TextBlock Text="{DynamicResource L.Settings.ColorOutputTip}" TextWrapping="Wrap" LineHeight="17" MaxWidth="260" />
+                        </ToolTip>
+                    </TextBlock.ToolTip>
+                </TextBlock>
+            </StackPanel>
+            <ComboBox SelectedIndex="{Binding SelectedColorOutputIndex}">
+                <ComboBoxItem Content="{DynamicResource L.Settings.RenderedOutput}" />
+                <ComboBoxItem Content="{DynamicResource L.Settings.SrgbOutput}" />
+            </ComboBox>
+        </StackPanel>
+</UserControl>

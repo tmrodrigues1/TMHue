@@ -64,9 +64,9 @@
     <sys:String x:Key="L.Settings.SampleTitle">Color sampling</sys:String>
     <sys:String x:Key="L.Settings.SampleTip1a">Exact pixel</sys:String>
     <sys:String x:Key="L.Settings.SampleTip1b"> reads the exact color of the pixel under the cursor — ideal for hitting a precise point, like an icon's edge.</sys:String>
-    <sys:String x:Key="L.Settings.SampleTip2a">5×5 average (recommended) / 11×11</sys:String>
-    <sys:String x:Key="L.Settings.SampleTip2b"> compute the dominant color of a small area around the cursor, avoiding variations caused by compression noise, anti-aliasing or gradients — ideal for sampling a surface's color.</sys:String>
-    <sys:String x:Key="L.Settings.SampleTip3">Applied automatically in real time as you hover — no need to restart the capture.</sys:String>
+    <sys:String x:Key="L.Settings.SampleTip2a">Region color — 5×5 / 11×11</sys:String>
+    <sys:String x:Key="L.Settings.SampleTip2b"> selects an actual pixel near the channel median. Ties favor the center; off-screen pixels are ignored. Thin lines may yield the background color.</sys:String>
+    <sys:String x:Key="L.Settings.SampleTip3">Mouse and keyboard use the same mode. The lens outlines the sampled area. Exact pixel is the default for new settings.</sys:String>
     <sys:String x:Key="L.Settings.CopyFormatTitle">Copy format</sys:String>
     <sys:String x:Key="L.Settings.CopyTip0">Default format when capturing a color:</sys:String>
     <sys:String x:Key="L.Settings.CopyTip1a">1 HEX</sys:String>
@@ -84,9 +84,9 @@
     <sys:String x:Key="L.Settings.ThemeSystem">System</sys:String>
     <sys:String x:Key="L.Settings.ThemeLight">Light</sys:String>
     <sys:String x:Key="L.Settings.ThemeDark">Dark</sys:String>
-    <sys:String x:Key="L.Settings.SampleExact">Exact pixel</sys:String>
-    <sys:String x:Key="L.Settings.Sample5">5×5 average</sys:String>
-    <sys:String x:Key="L.Settings.Sample11">11×11 average</sys:String>
+    <sys:String x:Key="L.Settings.SampleExact">1×1 (exact pixel)</sys:String>
+    <sys:String x:Key="L.Settings.Sample5">5×5</sys:String>
+    <sys:String x:Key="L.Settings.Sample11">11×11</sys:String>
     <sys:String x:Key="L.Settings.PressCombination">Press the combination…</sys:String>
     <sys:String x:Key="L.Settings.CurrentVersionFmt">Current version: {0}</sys:String>
     <sys:String x:Key="L.Settings.CooldownFmt">Next check in {0}.</sys:String>
@@ -197,7 +197,7 @@
 
     <!-- Magnifier / region capture -->
     <sys:String x:Key="L.Magnifier.EscHint">Press ESC to cancel</sys:String>
-    <sys:String x:Key="L.Magnifier.ArrowsHint">Use Shift+Arrows to move the cursor</sys:String>
+    <sys:String x:Key="L.Magnifier.ArrowsHint">Arrows: 1 px · Shift+arrows: next color</sys:String>
     <sys:String x:Key="L.Region.Hint">Drag to select the region · Esc to cancel</sys:String>
 
     <!-- Tray -->
@@ -208,4 +208,23 @@
     <sys:String x:Key="L.Tray.Settings">Settings</sys:String>
     <sys:String x:Key="L.Tray.Exit">Exit</sys:String>
 
+    <sys:String x:Key="L.Capture.ExclusionFailed">The picker windows could not be excluded from capture. Selection was cancelled to avoid an incorrect color.</sys:String>
+    <sys:String x:Key="L.Capture.ReadFailed">Pixels could not be read at this position. No color was saved or copied. Please try again.</sys:String>
+    <sys:String x:Key="L.Magnifier.RenderedSource">Captured values · 8-bit</sys:String>
+    <sys:String x:Key="L.Settings.PickerOptions">Advanced capture options</sys:String>
+    <sys:String x:Key="L.Settings.Tolerance">Shift+arrows tolerance</sys:String>
+    <sys:String x:Key="L.Capture.FreezeFailed">The screen could not be frozen. Selection was cancelled. Frozen mode limits memory to 256 MB; reduce resolution or use live capture.</sys:String>
+    <sys:String x:Key="L.Settings.SrgbOutput">Convert SDR to sRGB</sys:String>
+    <sys:String x:Key="L.Capture.ColorConversionFailed">The sample could not be converted to sRGB. Check the monitor profile and use SDR. For HDR, choose Captured values with its 8-bit limit. No color was saved or copied.</sys:String>
+    <sys:String x:Key="L.Magnifier.HdrSource">HDR/WCG · capture limited to 8-bit</sys:String>
+    <sys:String x:Key="L.Settings.PrecisionCursor">Use precision crosshair</sys:String>
+    <sys:String x:Key="L.Settings.PrecisionTip">Replaces the eyedropper with a crosshair whose open center marks the selected pixel without covering it. This helps align captures on edges, icons and small details. Color sampling keeps the same precision.</sys:String>
+    <sys:String x:Key="L.Settings.FreezeScreen">Freeze the screen while picking</sys:String>
+    <sys:String x:Key="L.Magnifier.SrgbSource">Converted to sRGB · SDR</sys:String>
+    <sys:String x:Key="L.Settings.ColorOutput">Color output</sys:String>
+    <sys:String x:Key="L.Settings.ToleranceTip">Ignores differences up to this value per channel. Zero detects any change. Plain arrows move one pixel.</sys:String>
+    <sys:String x:Key="L.Magnifier.Frozen">Frozen screen</sys:String>
+    <sys:String x:Key="L.Settings.FreezeTip">Keeps a still image of the screen during selection. Useful for picking colors from videos, animations or changing content: the chosen color stays stable until you click.&#x0a;&#x0a;The pointer and magnifier continue following your movement over that image. When disabled, the picker captures live content. The frozen image stays in memory only and is discarded on exit.</sys:String>
+    <sys:String x:Key="L.Settings.RenderedOutput">Captured values (default)</sys:String>
+    <sys:String x:Key="L.Settings.ColorOutputTip">Sets how the captured color is displayed, copied and saved.&#x0a;&#x0a;Captured values (default): keeps the RGB numbers read from the screen. Use this to reproduce or compare those values without conversion.&#x0a;&#x0a;Convert SDR to sRGB: uses the monitor color profile to convert the capture to sRGB, a common standard for websites and images. Useful when taking colors into other tools that use sRGB. Requires a valid profile and an SDR display.&#x0a;&#x0a;Capture uses 8 bits per channel. HDR has limitations; captured values may differ from the original file color.</sys:String>
 </ResourceDictionary>
