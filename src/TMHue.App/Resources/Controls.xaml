@@ -35,7 +35,10 @@
         </Setter>
     </Style>
 
-    <!-- Full-width gradient call-to-action, per the reference design. -->
+    <!-- Small right-pointing chevron, stroked (not filled) wherever it is used. -->
+    <Geometry x:Key="Geometry.ChevronRight">M0,0 L4,4 0,8</Geometry>
+
+    <!-- Tool tile: a glass slab whose rim is lit from above, per _about/novolayout.png. -->
     <Style x:Key="Button.Capture" TargetType="Button">
         <Setter Property="Background" Value="{DynamicResource Brush.CaptureGradient}" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.CaptureButtonText}" />
@@ -116,9 +119,9 @@
         </Setter>
     </Style>
 
-    <!-- Footer "Configurações" pill. -->
+    <!-- Footer action chips (shortcuts, clear, settings): violet-tinted glass. -->
     <Style x:Key="Button.SettingsPill" TargetType="Button">
-        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceSunken}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.GlassAccent}" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
         <Setter Property="FontFamily" Value="{StaticResource Font.Text}" />
         <Setter Property="FontSize" Value="13" />
@@ -128,16 +131,16 @@
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="Chrome" Background="{TemplateBinding Background}"
-                            BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
+                            BorderBrush="{DynamicResource Brush.GlassAccentBorder}" BorderThickness="1"
                             CornerRadius="12" Padding="{TemplateBinding Padding}">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.BorderStrong}" />
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.GlassAccentHover}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.Border}" />
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.GlassAccentPressed}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -180,10 +183,39 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.SurfaceSunken}" />
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.HoverFill}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.Border}" />
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.PressedFill}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Icon button with its own glass chip, for an action that sits alone on the pane
+         (the copy button beside the color readout). -->
+    <Style x:Key="Button.GlassIcon" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource Brush.GlassAccent}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+        <Setter Property="Width" Value="32" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Chrome" Background="{TemplateBinding Background}"
+                            BorderBrush="{DynamicResource Brush.GlassAccentBorder}" BorderThickness="1"
+                            CornerRadius="10">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.GlassAccentHover}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.GlassAccentPressed}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -235,6 +267,15 @@
                 </Setter>
             </Trigger>
         </Style.Triggers>
+    </Style>
+
+    <!-- Hairline placed inside a swatch (as its child) so the color keeps a visible edge on
+         the glass without tinting the fill. CornerRadius is the swatch's inner radius. -->
+    <Style x:Key="Swatch.Rim" TargetType="Border">
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.SwatchRim}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="7" />
+        <Setter Property="IsHitTestVisible" Value="False" />
     </Style>
 
     <!-- App-wide checkbox: rounded accent-filled box with a checkmark glyph, replacing the
@@ -330,7 +371,7 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsHighlighted" Value="True">
-                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.SurfaceSunken}" />
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.HoverFill}" />
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.AccentSoft}" />
@@ -394,8 +435,8 @@
                         <Popup x:Name="Popup" Placement="Bottom" AllowsTransparency="True"
                                Focusable="False" PopupAnimation="Fade" VerticalOffset="6"
                                IsOpen="{TemplateBinding IsDropDownOpen}">
-                            <Border Background="{DynamicResource Brush.SurfaceElevated}"
-                                    BorderBrush="{DynamicResource Brush.BorderStrong}" BorderThickness="1"
+                            <Border Background="{DynamicResource Brush.Popover}"
+                                    BorderBrush="{DynamicResource Brush.PopoverBorder}" BorderThickness="1"
                                     CornerRadius="12" Padding="0,4" SnapsToDevicePixels="True"
                                     Effect="{DynamicResource Shadow.Card}"
                                     Width="{Binding ActualWidth, ElementName=Toggle}">
@@ -410,9 +451,83 @@
         </Setter>
     </Style>
 
+    <!-- App-wide slider: hairline track with an accent fill and a round knob, replacing the
+         stock Windows slider. Same 18px height as the stock one, so layouts don't move. -->
+    <Style x:Key="Slider.TrackButton" TargetType="RepeatButton">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RepeatButton">
+                    <Grid Background="Transparent">
+                        <Border Height="4" CornerRadius="2" VerticalAlignment="Center"
+                                Background="{TemplateBinding Background}" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="Slider.Thumb" TargetType="Thumb">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Thumb">
+                    <Grid Width="18" Height="18" Background="Transparent">
+                        <Ellipse x:Name="Knob" Width="16" Height="16" Fill="White"
+                                 Stroke="{DynamicResource Brush.BorderStrong}" StrokeThickness="1" />
+                        <Ellipse x:Name="Dot" Width="6" Height="6" Fill="{DynamicResource Brush.Accent}" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Knob" Property="Stroke" Value="{DynamicResource Brush.HotkeyText}" />
+                        </Trigger>
+                        <Trigger Property="IsDragging" Value="True">
+                            <Setter TargetName="Knob" Property="Stroke" Value="{DynamicResource Brush.Accent}" />
+                            <Setter TargetName="Dot" Property="Width" Value="8" />
+                            <Setter TargetName="Dot" Property="Height" Value="8" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="Slider">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Slider">
+                    <Grid Height="18" Background="Transparent">
+                        <Border Height="4" CornerRadius="2" VerticalAlignment="Center"
+                                Background="{DynamicResource Brush.BorderStrong}" />
+                        <Track x:Name="PART_Track">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton Command="Slider.DecreaseLarge" Style="{StaticResource Slider.TrackButton}"
+                                              Background="{DynamicResource Brush.AccentGradient}" />
+                            </Track.DecreaseRepeatButton>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton Command="Slider.IncreaseLarge" Style="{StaticResource Slider.TrackButton}"
+                                              Background="Transparent" />
+                            </Track.IncreaseRepeatButton>
+                            <Track.Thumb>
+                                <Thumb Style="{StaticResource Slider.Thumb}" />
+                            </Track.Thumb>
+                        </Track>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- Small pill button for inline actions inside a card (e.g. "Alterar atalho"). -->
     <Style x:Key="Button.Pill" TargetType="Button">
-        <Setter Property="Background" Value="{DynamicResource Brush.SurfaceSunken}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.CaptureGradient}" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
         <Setter Property="FontFamily" Value="{StaticResource Font.Text}" />
         <Setter Property="FontSize" Value="12" />
@@ -422,16 +537,19 @@
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="Chrome" Background="{TemplateBinding Background}"
-                            BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
+                            BorderBrush="{DynamicResource Brush.CaptureButtonBorder}" BorderThickness="1"
                             CornerRadius="9" Padding="{TemplateBinding Padding}">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.BorderStrong}" />
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.CaptureGradientHover}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.Border}" />
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.CaptureGradientPressed}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Chrome" Property="Opacity" Value="0.5" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -439,16 +557,16 @@
         </Setter>
     </Style>
 
-    <!-- Dark, rounded tooltip matching the app surface, applied app-wide. -->
+    <!-- Rounded tooltip in the popover glass, applied app-wide. -->
     <Style TargetType="ToolTip">
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
         <Setter Property="FontSize" Value="12" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ToolTip">
-                    <Border Background="{DynamicResource Brush.SurfaceElevated}"
-                            BorderBrush="{DynamicResource Brush.BorderStrong}"
-                            BorderThickness="1" CornerRadius="8" Padding="12,10"
+                    <Border Background="{DynamicResource Brush.Popover}"
+                            BorderBrush="{DynamicResource Brush.PopoverBorder}"
+                            BorderThickness="1" CornerRadius="10" Padding="12,10"
                             Effect="{DynamicResource Shadow.Card}">
                         <ContentPresenter />
                     </Border>

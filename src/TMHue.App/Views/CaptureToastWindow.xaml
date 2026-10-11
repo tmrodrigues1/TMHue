@@ -18,22 +18,28 @@
     <!-- The outer margin gives the drop shadow room to render instead of being clipped,
          which is also what kept the old pill's edge looking jagged. -->
     <Grid Margin="24">
-        <Border Background="#F514131A"
-                BorderBrush="#2EFFFFFF"
+        <Border BorderBrush="#4DC3C8FF"
                 BorderThickness="1"
                 CornerRadius="12"
                 Padding="16,12">
+            <!-- Same popover glass as the dark theme's tooltips; toasts are always dark. -->
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#F520233A" Offset="0" />
+                    <GradientStop Color="#F5161726" Offset="1" />
+                </LinearGradientBrush>
+            </Border.Background>
             <Border.Effect>
-                <DropShadowEffect Color="#000000" Opacity="0.45" BlurRadius="20" ShadowDepth="4" Direction="270" />
+                <DropShadowEffect Color="#05040C" Opacity="0.5" BlurRadius="20" ShadowDepth="4" Direction="270" />
             </Border.Effect>
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <Border x:Name="SwatchDot" Width="24" Height="24" CornerRadius="8"
                         Background="#5B8DF6" BorderBrush="#40FFFFFF" BorderThickness="1"
                         Margin="0,0,12,0" VerticalAlignment="Center" />
                 <TextBlock x:Name="HexText" Text="#000000" FontFamily="Consolas, Courier New"
-                           FontSize="13" FontWeight="SemiBold" Foreground="#FFF5F4F8" VerticalAlignment="Center" />
+                           FontSize="13" FontWeight="SemiBold" Foreground="#FFF7F7FC" VerticalAlignment="Center" />
                 <TextBlock Text="{DynamicResource L.Toast.Copied}" FontFamily="Segoe UI" FontSize="13"
-                           Foreground="#FF8A8894" VerticalAlignment="Center" />
+                           Foreground="#FFA6A9C6" VerticalAlignment="Center" />
             </StackPanel>
         </Border>
     </Grid>

@@ -10,11 +10,18 @@
         Focusable="False"
         ShowActivated="False"
         SizeToContent="WidthAndHeight">
-    <Border Background="#FF1B1B22" BorderBrush="#FF3A3A44" BorderThickness="1" CornerRadius="10" Padding="8">
+    <Border BorderBrush="#FF4A4E72" BorderThickness="1" CornerRadius="10" Padding="8">
+        <!-- Opaque take on the dark popover glass: the lens must never tint what it magnifies. -->
+        <Border.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Color="#FF20233A" Offset="0" />
+                <GradientStop Color="#FF161726" Offset="1" />
+            </LinearGradientBrush>
+        </Border.Background>
         <StackPanel>
-            <TextBlock Text="{DynamicResource L.Magnifier.EscHint}" Foreground="#FF9A99A6" FontFamily="Segoe UI"
+            <TextBlock Text="{DynamicResource L.Magnifier.EscHint}" Foreground="#FFA6A9C6" FontFamily="Segoe UI"
                        FontSize="11" HorizontalAlignment="Center" Margin="0,0,0,0" />
-            <TextBlock Text="{DynamicResource L.Magnifier.ArrowsHint}" Foreground="#FF9A99A6" FontFamily="Segoe UI"
+            <TextBlock Text="{DynamicResource L.Magnifier.ArrowsHint}" Foreground="#FFA6A9C6" FontFamily="Segoe UI"
                        FontSize="11" HorizontalAlignment="Center" Margin="0,0,0,8" />
             <Grid Width="132" Height="132">
                 <Border ClipToBounds="True" CornerRadius="4">
@@ -32,9 +39,9 @@
                 <Border Width="12" Height="12" BorderBrush="#FFEACC48" BorderThickness="1"
                         HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" />
             </Grid>
-            <TextBlock x:Name="SampleLabel" Foreground="#FF9A99A6" FontSize="11"
+            <TextBlock x:Name="SampleLabel" Foreground="#FFA6A9C6" FontSize="11"
                        HorizontalAlignment="Center" Margin="0,6,0,0" />
-            <TextBlock x:Name="SourceLabel" Foreground="#FF9A99A6" FontSize="10" MaxWidth="240"
+            <TextBlock x:Name="SourceLabel" Foreground="#FFA6A9C6" FontSize="10" MaxWidth="240"
                        TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center" Margin="0,4,0,0" />
             <TextBlock x:Name="HexLabel" Text="#000000" Foreground="White" FontFamily="Consolas"
                        FontSize="12" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,8,0,0" />

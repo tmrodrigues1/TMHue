@@ -1,29 +1,125 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- Near-black with a subtle violet cast, matching the reference design. -->
-    <SolidColorBrush x:Key="Brush.Surface" Color="#FF0E0E10" />
-    <SolidColorBrush x:Key="Brush.SurfaceElevated" Color="#FF17171A" />
-    <SolidColorBrush x:Key="Brush.SurfaceSunken" Color="#FF1A1921" />
-    <SolidColorBrush x:Key="Brush.Border" Color="#FF232230" />
-    <SolidColorBrush x:Key="Brush.BorderStrong" Color="#FF34323F" />
+    <!-- Dark glass, per _about/novolayout.png: a deep navy pane lit by a blue bloom at the
+         top-left and a violet one at the bottom-right. The layers are stacked in one DrawingBrush
+         so every window shares the exact same material. The base stays a hair short of opaque
+         (alpha FA): the windows are layered with no backdrop blur, so any more see-through shows
+         whatever sits behind them in sharp focus, text included. -->
+    <DrawingBrush x:Key="Brush.Surface" Stretch="Fill">
+        <DrawingBrush.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+                    <GeometryDrawing.Brush>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#FA171A2D" Offset="0" />
+                            <GradientStop Color="#FA10111C" Offset="0.5" />
+                            <GradientStop Color="#FA140F20" Offset="1" />
+                        </LinearGradientBrush>
+                    </GeometryDrawing.Brush>
+                </GeometryDrawing>
+                <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+                    <GeometryDrawing.Brush>
+                        <RadialGradientBrush Center="0.08,0" GradientOrigin="0.08,0" RadiusX="0.95" RadiusY="0.55">
+                            <GradientStop Color="#3D5B74FF" Offset="0" />
+                            <GradientStop Color="#005B74FF" Offset="1" />
+                        </RadialGradientBrush>
+                    </GeometryDrawing.Brush>
+                </GeometryDrawing>
+                <GeometryDrawing Geometry="M0,0 H1 V1 H0 Z">
+                    <GeometryDrawing.Brush>
+                        <RadialGradientBrush Center="1,0.9" GradientOrigin="1,0.9" RadiusX="0.8" RadiusY="0.5">
+                            <GradientStop Color="#2B8B5CF6" Offset="0" />
+                            <GradientStop Color="#008B5CF6" Offset="1" />
+                        </RadialGradientBrush>
+                    </GeometryDrawing.Brush>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
 
-    <SolidColorBrush x:Key="Brush.TextPrimary" Color="#FFF5F4F8" />
-    <SolidColorBrush x:Key="Brush.TextSecondary" Color="#FF8A8894" />
-    <SolidColorBrush x:Key="Brush.TextTertiary" Color="#FF6E6C78" />
+    <!-- Rim light around a window: brighter where the "light" hits (top-left), fading away. -->
+    <LinearGradientBrush x:Key="Brush.WindowBorder" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#75C3C8FF" Offset="0" />
+        <GradientStop Color="#33C3C8FF" Offset="0.5" />
+        <GradientStop Color="#52B7A8FF" Offset="1" />
+    </LinearGradientBrush>
+
+    <!-- Cards and insets are translucent tints over the window glass, never opaque fills. -->
+    <LinearGradientBrush x:Key="Brush.SurfaceElevated" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#1AA3AEFF" Offset="0" />
+        <GradientStop Color="#0DA3AEFF" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="Brush.SurfaceSunken" Color="#4D07080F" />
+    <SolidColorBrush x:Key="Brush.Border" Color="#24C3C8FF" />
+    <SolidColorBrush x:Key="Brush.BorderStrong" Color="#42C3C8FF" />
+
+    <!-- Hover/pressed washes for chromeless controls. -->
+    <SolidColorBrush x:Key="Brush.HoverFill" Color="#1FC3C8FF" />
+    <SolidColorBrush x:Key="Brush.PressedFill" Color="#12C3C8FF" />
+
+    <!-- Tooltips, dropdowns and other surfaces that float directly over the desktop: nearly
+         opaque, since there is no window glass behind them to keep the text readable. -->
+    <LinearGradientBrush x:Key="Brush.Popover" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FF20233A" Offset="0" />
+        <GradientStop Color="#FF161726" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="Brush.PopoverBorder" Color="#4DC3C8FF" />
+
+    <!-- Violet-tinted glass for small accent chips (copy button, title badges, footer actions). -->
+    <LinearGradientBrush x:Key="Brush.GlassAccent" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#3D8E82FF" Offset="0" />
+        <GradientStop Color="#1F7C5CFC" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="Brush.GlassAccentHover" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#5C8E82FF" Offset="0" />
+        <GradientStop Color="#387C5CFC" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="Brush.GlassAccentPressed" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#2B8E82FF" Offset="0" />
+        <GradientStop Color="#147C5CFC" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="Brush.GlassAccentBorder" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#66BDB5FF" Offset="0" />
+        <GradientStop Color="#2EBDB5FF" Offset="1" />
+    </LinearGradientBrush>
+
+    <!-- Hairline drawn inside color swatches so near-black/near-white colors keep an edge on the
+         glass. Kept to the outermost pixel: the swatch fill itself must stay the true color. -->
+    <SolidColorBrush x:Key="Brush.SwatchRim" Color="#2EFFFFFF" />
+
+    <SolidColorBrush x:Key="Brush.TextPrimary" Color="#FFF7F7FC" />
+    <SolidColorBrush x:Key="Brush.TextSecondary" Color="#FFA6A9C6" />
+    <SolidColorBrush x:Key="Brush.TextTertiary" Color="#FF8A8DAA" />
 
     <SolidColorBrush x:Key="Brush.Accent" Color="#FF7C5CFC" />
     <SolidColorBrush x:Key="Brush.AccentHover" Color="#FF8F73FD" />
     <SolidColorBrush x:Key="Brush.AccentPressed" Color="#FF6A4BE0" />
-    <SolidColorBrush x:Key="Brush.AccentSoft" Color="#337C5CFC" />
+    <SolidColorBrush x:Key="Brush.AccentSoft" Color="#407C5CFC" />
     <SolidColorBrush x:Key="Brush.HotkeyText" Color="#FF9D8CFF" />
+    <LinearGradientBrush x:Key="Brush.AccentGradient" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#FF5B8DF6" Offset="0" />
+        <GradientStop Color="#FF8B5CF6" Offset="1" />
+    </LinearGradientBrush>
 
-    <!-- Capture button: flat near-black fill per the reference design, with subtle hover/pressed lift. -->
-    <SolidColorBrush x:Key="Brush.CaptureGradient" Color="#FF17171A" />
-    <SolidColorBrush x:Key="Brush.CaptureGradientHover" Color="#FF201F24" />
-    <SolidColorBrush x:Key="Brush.CaptureGradientPressed" Color="#FF121215" />
+    <!-- Tool tiles: glass slabs a step brighter than a card, with a rim that catches light on top. -->
+    <LinearGradientBrush x:Key="Brush.CaptureGradient" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#29A3AEFF" Offset="0" />
+        <GradientStop Color="#14A3AEFF" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="Brush.CaptureGradientHover" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#42A3AEFF" Offset="0" />
+        <GradientStop Color="#26A3AEFF" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="Brush.CaptureGradientPressed" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#17A3AEFF" Offset="0" />
+        <GradientStop Color="#0AA3AEFF" Offset="1" />
+    </LinearGradientBrush>
     <SolidColorBrush x:Key="Brush.CaptureButtonText" Color="#FFFFFFFF" />
-    <SolidColorBrush x:Key="Brush.CaptureButtonBorder" Color="#26FFFFFF" />
+    <LinearGradientBrush x:Key="Brush.CaptureButtonBorder" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#4DC3C8FF" Offset="0" />
+        <GradientStop Color="#1FC3C8FF" Offset="1" />
+    </LinearGradientBrush>
 
     <!-- Feedback colors: the same IndianRed/MediumSeaGreen the app always used on dark. -->
     <SolidColorBrush x:Key="Brush.Error" Color="#FFCD5C5C" />
@@ -33,8 +129,8 @@
     <SolidColorBrush x:Key="Brush.PreviewSurface" Color="#F50D0C12" />
     <SolidColorBrush x:Key="Brush.PreviewText" Color="#FFF5F4F8" />
 
-    <DropShadowEffect x:Key="Shadow.Window" Color="#000000" Opacity="0.6" BlurRadius="24" ShadowDepth="6" Direction="270" />
-    <DropShadowEffect x:Key="Shadow.Card" Color="#000000" Opacity="0.25" BlurRadius="14" ShadowDepth="3" Direction="270" />
+    <DropShadowEffect x:Key="Shadow.Window" Color="#05040C" Opacity="0.6" BlurRadius="24" ShadowDepth="6" Direction="270" />
+    <DropShadowEffect x:Key="Shadow.Card" Color="#05040C" Opacity="0.4" BlurRadius="16" ShadowDepth="4" Direction="270" />
     <DropShadowEffect x:Key="Shadow.Preview" Color="#000000" Opacity="0.6" BlurRadius="20" ShadowDepth="8" Direction="270" />
 
 </ResourceDictionary>

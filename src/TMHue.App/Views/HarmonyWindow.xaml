@@ -33,6 +33,11 @@
                                 CornerRadius="9">
                             <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" />
                         </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
@@ -40,7 +45,7 @@
     </Window.Resources>
 
     <Border Background="{DynamicResource Brush.Surface}"
-            BorderBrush="{DynamicResource Brush.Border}"
+            BorderBrush="{DynamicResource Brush.WindowBorder}"
             BorderThickness="1"
             CornerRadius="18"
             Effect="{DynamicResource Shadow.Window}"
@@ -69,8 +74,8 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <Border Grid.Column="0" Background="{DynamicResource Brush.SurfaceSunken}"
-                            BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
+                    <Border Grid.Column="0" Background="{DynamicResource Brush.GlassAccent}"
+                            BorderBrush="{DynamicResource Brush.GlassAccentBorder}" BorderThickness="1"
                             CornerRadius="9" Width="28" Height="28">
                         <TextBlock Text="&#xE790;" FontFamily="Segoe MDL2 Assets" FontSize="13"
                                    Foreground="{DynamicResource Brush.HotkeyText}"
@@ -190,6 +195,7 @@
                                                                       Command="{Binding DataContext.CopySwatchCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                                       CommandParameter="{Binding}" />
                                                     </Border.InputBindings>
+                                                    <Border Style="{StaticResource Swatch.Rim}" />
                                                 </Border>
                                                 <TextBlock Text="{Binding Value}" FontFamily="{StaticResource Font.Mono}"
                                                            FontSize="9" Foreground="{DynamicResource Brush.TextSecondary}"

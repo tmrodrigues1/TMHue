@@ -27,7 +27,7 @@
     <Border Grid.Column="0"
             Width="372"
             Background="{DynamicResource Brush.Surface}"
-            BorderBrush="{DynamicResource Brush.Border}"
+            BorderBrush="{DynamicResource Brush.WindowBorder}"
             BorderThickness="1"
             CornerRadius="18"
             Effect="{DynamicResource Shadow.Window}"
@@ -80,9 +80,15 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
+                    <!-- The swatch casts a soft glow of its own color onto the glass. -->
                     <Border Grid.Column="0" Width="78" Height="78" CornerRadius="12"
                             BorderBrush="{DynamicResource Brush.BorderStrong}" BorderThickness="1"
-                            Background="{Binding CurrentBrush}" Margin="-14,0,0,0" />
+                            Background="{Binding CurrentBrush}" Margin="-14,0,0,0">
+                        <Border.Effect>
+                            <DropShadowEffect Color="{Binding CurrentBrush.Color}" BlurRadius="22"
+                                              ShadowDepth="0" Opacity="0.6" />
+                        </Border.Effect>
+                    </Border>
 
                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="14,0,0,0">
                         <!-- Grid instead of a horizontal StackPanel: the copy button gets a fixed
@@ -99,9 +105,8 @@
                                        FontSize="{Binding PrimaryFormat.Value, Converter={StaticResource TextLengthToFontSize}}"
                                        VerticalAlignment="Center"
                                        TextTrimming="CharacterEllipsis" />
-                            <Button Grid.Column="1" Style="{StaticResource Button.Icon}" Width="34" Height="34"
+                            <Button Grid.Column="1" Style="{StaticResource Button.GlassIcon}" Width="34" Height="34"
                                     Content="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="15"
-                                    Foreground="{DynamicResource Brush.HotkeyText}"
                                     Command="{Binding CopyCurrentCommand}"
                                     ToolTip="{Binding CopyCurrentTooltip}"
                                     Margin="8,2,0,0" />
@@ -236,8 +241,29 @@
                             Width="Auto" Height="Auto" VerticalAlignment="Center"
                             Command="{Binding ToggleMorePanelCommand}"
                             ToolTip="{DynamicResource L.Main.MoreToggleTip}">
-                        <TextBlock Text="{Binding MorePanelToggleLabel}" FontFamily="{StaticResource Font.Text}"
-                                   FontSize="12" Foreground="{DynamicResource Brush.TextSecondary}" Margin="8,4" />
+                        <StackPanel Orientation="Horizontal" Margin="8,4">
+                            <TextBlock Text="{Binding MorePanelToggleLabel}" FontFamily="{StaticResource Font.Text}"
+                                       FontSize="12" Foreground="{DynamicResource Brush.HotkeyText}" />
+                            <!-- Points at the sidebar while closed, back at the card while open. -->
+                            <Path Data="{StaticResource Geometry.ChevronRight}" Stroke="{DynamicResource Brush.HotkeyText}"
+                                  StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                  StrokeLineJoin="Round" VerticalAlignment="Center" Margin="7,1,0,0"
+                                  RenderTransformOrigin="0.5,0.5">
+                                <Path.Style>
+                                    <Style TargetType="Path">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsMorePanelOpen}" Value="True">
+                                                <Setter Property="RenderTransform">
+                                                    <Setter.Value>
+                                                        <ScaleTransform ScaleX="-1" />
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Path.Style>
+                            </Path>
+                        </StackPanel>
                     </Button>
                 </Grid>
 
@@ -264,6 +290,7 @@
                                                       Command="{Binding DataContext.TogglePinCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                       CommandParameter="{Binding}" />
                                     </Border.InputBindings>
+                                    <Border Style="{StaticResource Swatch.Rim}" />
                                 </Border>
                                 <TextBlock Text="{Binding Hex}" FontFamily="{StaticResource Font.Mono}" FontSize="10"
                                            Foreground="{DynamicResource Brush.TextSecondary}"
@@ -285,7 +312,7 @@
                         Cursor="Help" Focusable="False" IsHitTestVisible="True"
                         ToolTipService.InitialShowDelay="0" ToolTipService.ShowDuration="60000">
                     <TextBlock Text="&#xE765;" FontFamily="Segoe MDL2 Assets" FontSize="14"
-                               Foreground="{DynamicResource Brush.TextSecondary}" />
+                               Foreground="{DynamicResource Brush.TextPrimary}" />
                     <Button.ToolTip>
                         <ToolTip>
                             <StackPanel MinWidth="210">
@@ -347,13 +374,13 @@
                         Padding="10" Margin="0,0,10,0"
                         Command="{Binding ClearHistoryCommand}" ToolTip="{DynamicResource L.Main.ClearHistoryTip}">
                     <TextBlock Text="&#xE75C;" FontFamily="Segoe MDL2 Assets" FontSize="14"
-                               Foreground="{DynamicResource Brush.TextSecondary}" />
+                               Foreground="{DynamicResource Brush.TextPrimary}" />
                 </Button>
 
                 <Button Style="{StaticResource Button.SettingsPill}" Click="OnSettingsClick"
                         Padding="10" ToolTip="{DynamicResource L.Common.Settings}">
                     <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="14"
-                               Foreground="{DynamicResource Brush.TextSecondary}" />
+                               Foreground="{DynamicResource Brush.TextPrimary}" />
                 </Button>
             </StackPanel>
 
@@ -377,7 +404,7 @@
         <Border Grid.Column="1"
                 Width="104"
                 Background="{DynamicResource Brush.Surface}"
-                BorderBrush="{DynamicResource Brush.Border}"
+                BorderBrush="{DynamicResource Brush.WindowBorder}"
                 BorderThickness="1"
                 CornerRadius="18"
                 Effect="{DynamicResource Shadow.Window}"
@@ -443,6 +470,7 @@
                                                               Command="{Binding DataContext.TogglePinCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                               CommandParameter="{Binding}" />
                                             </Border.InputBindings>
+                                            <Border Style="{StaticResource Swatch.Rim}" CornerRadius="9" />
                                         </Border>
                                         <TextBlock Text="{Binding Hex}" FontFamily="{StaticResource Font.Mono}"
                                                    FontSize="10" Foreground="{DynamicResource Brush.TextSecondary}"

@@ -15,13 +15,19 @@
         TextOptions.TextFormattingMode="Display">
     <!-- Margem externa dá espaço para a sombra, no mesmo padrão do CaptureToastWindow. -->
     <Grid Margin="24">
-        <Border Background="#F514131A"
-                BorderBrush="#2EFFFFFF"
+        <Border BorderBrush="#4DC3C8FF"
                 BorderThickness="1"
                 CornerRadius="12"
                 Padding="16,12">
+            <!-- Same popover glass as the dark theme's tooltips; toasts are always dark. -->
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#F520233A" Offset="0" />
+                    <GradientStop Color="#F5161726" Offset="1" />
+                </LinearGradientBrush>
+            </Border.Background>
             <Border.Effect>
-                <DropShadowEffect Color="#000000" Opacity="0.45" BlurRadius="20" ShadowDepth="4" Direction="270" />
+                <DropShadowEffect Color="#05040C" Opacity="0.5" BlurRadius="20" ShadowDepth="4" Direction="270" />
             </Border.Effect>
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <Border Width="24" Height="24" CornerRadius="8" Margin="0,0,12,0" VerticalAlignment="Center"
@@ -36,7 +42,7 @@
                                Foreground="#FFFFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center" />
                 </Border>
                 <TextBlock x:Name="MessageText" FontFamily="Segoe UI"
-                           FontSize="13" Foreground="#FFF5F4F8" VerticalAlignment="Center" Margin="0,0,12,0" />
+                           FontSize="13" Foreground="#FFF7F7FC" VerticalAlignment="Center" Margin="0,0,12,0" />
                 <Button x:Name="UpdateButton" Content="{DynamicResource L.Settings.Update}" Click="OnUpdateClick"
                         FontFamily="Segoe UI" FontSize="12" FontWeight="SemiBold"
                         Foreground="#FFFFFFFF" Background="#5B8DF6" BorderThickness="0"
@@ -60,7 +66,7 @@
                     </Button.Template>
                 </Button>
                 <Button x:Name="DismissButton" Content="&#xE711;" Click="OnDismissClick"
-                        FontFamily="Segoe MDL2 Assets" FontSize="10" Foreground="#FF8A8894"
+                        FontFamily="Segoe MDL2 Assets" FontSize="10" Foreground="#FFA6A9C6"
                         Background="Transparent" BorderThickness="0" Padding="8,6" Margin="4,0,0,0"
                         Cursor="Hand" VerticalAlignment="Center">
                     <Button.Template>

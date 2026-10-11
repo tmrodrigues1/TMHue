@@ -19,8 +19,8 @@
 
         <!-- Instruction pill, centered at the top of the primary work area. -->
         <Border x:Name="HintPill"
-                Background="{DynamicResource Brush.SurfaceElevated}"
-                BorderBrush="{DynamicResource Brush.BorderStrong}" BorderThickness="1"
+                Background="{DynamicResource Brush.Popover}"
+                BorderBrush="{DynamicResource Brush.PopoverBorder}" BorderThickness="1"
                 CornerRadius="12" Padding="16,9">
             <TextBlock Text="{DynamicResource L.Region.Hint}"
                        FontFamily="{StaticResource Font.Text}" FontSize="13"

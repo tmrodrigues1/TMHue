@@ -12,7 +12,7 @@
         ShowInTaskbar="False">
 
     <Border Background="{DynamicResource Brush.Surface}"
-            BorderBrush="{DynamicResource Brush.Border}"
+            BorderBrush="{DynamicResource Brush.WindowBorder}"
             BorderThickness="1"
             CornerRadius="18"
             Effect="{DynamicResource Shadow.Window}"
@@ -20,8 +20,8 @@
 
         <StackPanel Margin="24,20">
             <StackPanel Orientation="Horizontal">
-                <Border Background="{DynamicResource Brush.SurfaceSunken}"
-                        BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
+                <Border Background="{DynamicResource Brush.GlassAccent}"
+                        BorderBrush="{DynamicResource Brush.GlassAccentBorder}" BorderThickness="1"
                         CornerRadius="9" Width="28" Height="28">
                     <TextBlock Text="&#xE896;" FontFamily="Segoe MDL2 Assets" FontSize="13"
                                Foreground="{DynamicResource Brush.HotkeyText}"
@@ -40,7 +40,7 @@
                     BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
                     CornerRadius="7" Height="14" Margin="0,12,0,0" ClipToBounds="True">
                 <Grid x:Name="ProgressTrack">
-                    <Border x:Name="ProgressFill" Background="{DynamicResource Brush.CaptureGradient}"
+                    <Border x:Name="ProgressFill" Background="{DynamicResource Brush.AccentGradient}"
                             CornerRadius="6" HorizontalAlignment="Left" Width="0" />
                 </Grid>
             </Border>

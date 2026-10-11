@@ -46,7 +46,7 @@
                                                 <Setter TargetName="Chevron" Property="Text" Value="&#xE70E;" />
                                             </Trigger>
                                             <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter TargetName="HeaderBorder" Property="Background" Value="{DynamicResource Brush.SurfaceSunken}" />
+                                                <Setter TargetName="HeaderBorder" Property="Background" Value="{DynamicResource Brush.HoverFill}" />
                                             </Trigger>
                                         </ControlTemplate.Triggers>
                                     </ControlTemplate>
@@ -66,7 +66,7 @@
     </Window.Resources>
 
     <Border Background="{DynamicResource Brush.Surface}"
-            BorderBrush="{DynamicResource Brush.Border}"
+            BorderBrush="{DynamicResource Brush.WindowBorder}"
             BorderThickness="1"
             CornerRadius="18"
             Effect="{DynamicResource Shadow.Window}"
@@ -92,8 +92,8 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Border Background="{DynamicResource Brush.SurfaceSunken}"
-                            BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
+                    <Border Background="{DynamicResource Brush.GlassAccent}"
+                            BorderBrush="{DynamicResource Brush.GlassAccentBorder}" BorderThickness="1"
                             CornerRadius="9" Width="28" Height="28">
                         <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="13"
                                    Foreground="{DynamicResource Brush.HotkeyText}"

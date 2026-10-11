@@ -117,8 +117,8 @@ public partial class MagnifierWindow : Window
         UpdateFormatHint(activeFormat);
     }
 
-    private static readonly System.Windows.Media.Brush SeparatorBrush = CreateFrozenBrush(0x6A, 0x69, 0x76);
-    private static readonly System.Windows.Media.Brush InactiveBrush = CreateFrozenBrush(0x9A, 0x99, 0xA6);
+    private static readonly System.Windows.Media.Brush SeparatorBrush = CreateFrozenBrush(0x6F, 0x72, 0x90);
+    private static readonly System.Windows.Media.Brush InactiveBrush = CreateFrozenBrush(0xA6, 0xA9, 0xC6);
 
     private static System.Windows.Media.Brush CreateFrozenBrush(byte r, byte g, byte b)
     {
