@@ -203,8 +203,12 @@ jobs:
           $tag = "v$($env:VERSION)"
           $assets = gh release view $tag --repo $env:REPO_URL --json assets --jq '.assets[].name'
           if ($LASTEXITCODE -ne 0) { throw 'Falha ao listar os arquivos da release.' }
+          # O upload do Velopack reescreve os feeds: conferir os bytes publicados, não os locais.
+          $publishedDirectory = Join-Path $env:RUNNER_TEMP 'published-assets'
+          gh release download $tag --repo $env:REPO_URL --dir $publishedDirectory
+          if ($LASTEXITCODE -ne 0) { throw 'Falha ao baixar os arquivos publicados para verificar os hashes.' }
           $sums = foreach ($name in $assets) {
-            $file = Join-Path 'artifacts/releases' $name
+            $file = Join-Path $publishedDirectory $name
             if (-not (Test-Path $file)) { throw "Arquivo da release não encontrado localmente: $name" }
             '{0}  {1}' -f (Get-FileHash $file -Algorithm SHA256).Hash.ToLowerInvariant(), $name
           }
