@@ -54,7 +54,7 @@ jobs:
             elseif ($line.StartsWith($heading)) { $inSection = $true }
           }
           if (-not $inSection) { throw "CHANGELOG.md não tem a seção $heading." }
-          $notes = ($body -join "`n").Trim()
+          $notes = (($body -join "`n").Trim() -replace '(?m)^### ', '## ')
           if (-not $notes) { throw "A seção $heading do CHANGELOG.md está vazia." }
           Set-Content -Path (Join-Path $env:RUNNER_TEMP 'release-notes.md') -Value $notes -Encoding utf8
 
@@ -126,7 +126,9 @@ jobs:
       - name: Baixar release anterior (delta)
         shell: pwsh
         continue-on-error: true
-        run: vpk download github --repoUrl $env:REPO_URL --outputDir artifacts/releases
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: vpk download github --repoUrl $env:REPO_URL --token $env:GITHUB_TOKEN --outputDir artifacts/releases
 
       - name: Empacotar com Velopack
         shell: pwsh
@@ -179,8 +181,11 @@ jobs:
           $tag = "v$($env:VERSION)"
           $setupName = "$($env:PACK_ID)-win-Setup.exe"
           $installerName = 'TMHUE_v' + $env:VERSION.Replace('.', '') + '.exe'
-          $release = gh api "repos/$env:GITHUB_REPOSITORY/releases/tags/$tag" | ConvertFrom-Json
+          $releases = gh api "repos/$env:GITHUB_REPOSITORY/releases?per_page=100" | ConvertFrom-Json
           if ($LASTEXITCODE -ne 0) { throw 'Falha ao consultar a release.' }
+          $release = @($releases | Where-Object tag_name -eq $tag)
+          if ($release.Count -ne 1 -or -not $release[0].draft) { throw 'Rascunho da release não encontrado.' }
+          $release = $release[0]
           $setup = @($release.assets | Where-Object name -eq $setupName)
           if ($setup.Count -ne 1) { throw 'Instalador da release não encontrado.' }
           gh api --method PATCH "repos/$env:GITHUB_REPOSITORY/releases/assets/$($setup[0].id)" -f "name=$installerName"
