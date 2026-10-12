@@ -27,9 +27,10 @@ O workflow então:
    a release anterior (`vpk download github`) para gerar o **pacote delta**.
 5. Empacota com `vpk pack` usando o `packId` exclusivo `com.thiagorodrigues.TMHue`
    (não conflita com `%LocalAppData%\TMHue`, onde ficam configurações e histórico).
-6. Cria a GitHub Release (nunca pré-release) anexando `Setup.exe`, pacote completo
+6. Prepara a GitHub Release em rascunho (nunca pré-release) anexando o instalador
+   `TMHUE_vXYZ.exe` (por exemplo, `TMHUE_v130.exe`), pacote completo
    `.nupkg`, delta quando disponível e `releases.win.json` — o feed que o app consulta.
-7. Anexa `SHA256SUMS.txt` (SHA-256 de cada arquivo da release) e grava as notas.
+7. Anexa `SHA256SUMS.txt` (SHA-256 de cada arquivo da release), grava as notas e publica.
 
 As actions de terceiros são fixadas pelo SHA do commit, com a versão em comentário; ao
 atualizá-las, troque os dois.
@@ -122,7 +123,8 @@ A splash (`packaging/velopack/splash.gif`, ~316 KB, 10 FPS, loop) é gerada por
 A primeira migração é uma reinstalação manual documentada: baixar o novo `Setup.exe`,
 instalar (o `packId` novo instala em `%LocalAppData%\com.thiagorodrigues.TMHue`) e
 desinstalar a versão Inno antiga em **Configurações > Aplicativos**. Os dados do usuário
-em `%LocalAppData%\TMHue` são preservados — nenhum instalador toca nessa pasta.
+em `%LocalAppData%\TMHue` são preservados durante a instalação e as atualizações;
+a desinstalação remove os dados do aplicativo.
 Os arquivos do Inno Setup e o rascunho de MSIX permanecem em `packaging/legacy` apenas como
 referência histórica; não são mantidos nem devem ser usados para distribuição (ver
 `packaging/legacy/README.md`).

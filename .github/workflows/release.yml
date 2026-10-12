@@ -137,6 +137,7 @@ jobs:
         run: |
           $vpkArgs = @(
             'pack',
+            '--runtime', 'win-x64',
             '--packId', $env:PACK_ID,
             '--packVersion', $env:VERSION,
             '--packDir', 'artifacts/publish',
@@ -165,8 +166,26 @@ jobs:
         run: |
           vpk upload github --repoUrl $env:REPO_URL --token $env:GITHUB_TOKEN `
             --outputDir artifacts/releases `
-            --releaseName "TMHue $($env:VERSION)" --tag "v$($env:VERSION)" --publish
+            --releaseName "TMHue $($env:VERSION)" --tag "v$($env:VERSION)" `
+            --targetCommitish $env:GITHUB_SHA
           if ($LASTEXITCODE -ne 0) { throw 'Falha no vpk upload.' }
+
+      - name: Nomear instalador da release
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          $tag = "v$($env:VERSION)"
+          $setupName = "$($env:PACK_ID)-win-Setup.exe"
+          $installerName = 'TMHUE_v' + $env:VERSION.Replace('.', '') + '.exe'
+          $release = gh api "repos/$env:GITHUB_REPOSITORY/releases/tags/$tag" | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { throw 'Falha ao consultar a release.' }
+          $setup = @($release.assets | Where-Object name -eq $setupName)
+          if ($setup.Count -ne 1) { throw 'Instalador da release não encontrado.' }
+          gh api --method PATCH "repos/$env:GITHUB_REPOSITORY/releases/assets/$($setup[0].id)" -f "name=$installerName"
+          if ($LASTEXITCODE -ne 0) { throw 'Falha ao renomear o instalador.' }
+          Move-Item -LiteralPath (Join-Path 'artifacts/releases' $setupName) -Destination (Join-Path 'artifacts/releases' $installerName)
 
       # docs/security.md pede ao usuário que confira o SHA-256 do que baixou. A lista é gerada
       # a partir dos arquivos realmente anexados à release, no formato do sha256sum.
@@ -189,12 +208,12 @@ jobs:
           gh release upload $tag $sumsFile --repo $env:REPO_URL --clobber
           if ($LASTEXITCODE -ne 0) { throw 'Falha ao anexar SHA256SUMS.txt.' }
 
-      - name: Adicionar notas da release
+      - name: Publicar release com notas
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           gh release edit "v$($env:VERSION)" --repo $env:REPO_URL `
-            --notes-file (Join-Path $env:RUNNER_TEMP 'release-notes.md')
-          if ($LASTEXITCODE -ne 0) { throw 'Falha ao adicionar as notas da release.' }
+            --notes-file (Join-Path $env:RUNNER_TEMP 'release-notes.md') --draft=false --latest
+          if ($LASTEXITCODE -ne 0) { throw 'Falha ao publicar a release.' }

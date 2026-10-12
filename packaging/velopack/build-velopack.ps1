@@ -71,6 +71,7 @@ if ($SplashTestPadMB -gt 0) {
 # %LocalAppData%\TMHue (configurações/histórico do usuário).
 $vpkArgs = @(
     'pack',
+    '--runtime', 'win-x64',
     '--packId', 'com.thiagorodrigues.TMHue',
     '--packVersion', $Version,
     '--packDir', $publishDirectory,
