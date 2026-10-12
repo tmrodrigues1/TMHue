@@ -32,11 +32,21 @@ public partial class MagnifierWindow : Window
     private string? _monitorDevice;
     private int _sampleSide;
     private (int X, int Y, int Width, int Height)? _placement;
+
+    // Monitors are fixed for the lens' lifetime: a topology change ends the capture.
+    private readonly MonitorLayout _layout;
+
+    // UpdateContent/MoveTo run on every picker frame. The readout, the source line and the
+    // physical size are only recomputed when their inputs actually changed.
+    private (RgbColor Color, CopyFormat Format)? _shownReadout;
+    private (CaptureColorOutput Output, bool Hdr, bool Frozen)? _shownSource;
+    private bool _sizeStale = true;
     internal int BitmapUpdateCount { get; private set; }
     internal string DisplayedValue => HexLabel.Text;
 
-    public MagnifierWindow()
+    public MagnifierWindow(MonitorLayout? layout = null)
     {
+        _layout = layout ?? new MonitorLayout();
         InitializeComponent();
         PixelImage.Source = _bitmap;
 
@@ -92,28 +102,43 @@ public partial class MagnifierWindow : Window
             _hasPixels = true;
         }
 
-        HexLabel.Text = centerColor.Format(activeFormat);
+        ShowReadout(centerColor, activeFormat);
         if (_sampleSide != sampleSide)
         {
             _sampleSide = sampleSide;
+            _sizeStale = true;
             SampleBoundary.Width = SampleBoundary.Height = sampleSide * 12;
             SampleOutline.Width = SampleOutline.Height = sampleSide * 12;
             SampleLabel.Text = TMHue.App.Infrastructure.LocalizationService.Get(sampleSide switch
             { 5 => "L.Settings.Sample5", 11 => "L.Settings.Sample11", _ => "L.Settings.SampleExact" });
         }
-        var sourceKey = sample.ColorOutput == CaptureColorOutput.Srgb ? "L.Magnifier.SrgbSource"
-            : sample.AdvancedColorActive is true ? "L.Magnifier.HdrSource" : "L.Magnifier.RenderedSource";
-        var description = TMHue.App.Infrastructure.LocalizationService.Get(sourceKey);
-        if (sample.IsFrozen) description += " · " + TMHue.App.Infrastructure.LocalizationService.Get("L.Magnifier.Frozen");
-        if (SourceLabel.Text != description) SourceLabel.Text = description;
+        var source = (sample.ColorOutput, sample.AdvancedColorActive is true, sample.IsFrozen);
+        if (_shownSource != source)
+        {
+            _shownSource = source;
+            var sourceKey = sample.ColorOutput == CaptureColorOutput.Srgb ? "L.Magnifier.SrgbSource"
+                : sample.AdvancedColorActive is true ? "L.Magnifier.HdrSource" : "L.Magnifier.RenderedSource";
+            var description = TMHue.App.Infrastructure.LocalizationService.Get(sourceKey);
+            if (sample.IsFrozen) description += " · " + TMHue.App.Infrastructure.LocalizationService.Get("L.Magnifier.Frozen");
+            SourceLabel.Text = description;
+            _sizeStale = true;
+        }
         UpdateFormatHint(activeFormat);
+    }
+
+    private void ShowReadout(RgbColor color, CopyFormat format)
+    {
+        if (_shownReadout == (color, format)) return;
+        _shownReadout = (color, format);
+        HexLabel.Text = color.Format(format);
+        _sizeStale = true;
     }
 
     /// <summary>Updates just the readout text and hint when the format shortcut changes
     /// mid-hover, without re-writing the pixel bitmap.</summary>
     public void UpdateFormat(RgbColor centerColor, CopyFormat activeFormat)
     {
-        HexLabel.Text = centerColor.Format(activeFormat);
+        ShowReadout(centerColor, activeFormat);
         UpdateFormatHint(activeFormat);
     }
 
@@ -138,6 +163,7 @@ public partial class MagnifierWindow : Window
     {
         if (_renderedHintFormat == activeFormat) return;
         _renderedHintFormat = activeFormat;
+        _sizeStale = true;
 
         FormatHint.Inlines.Clear();
 
@@ -165,19 +191,22 @@ public partial class MagnifierWindow : Window
         var hwnd = new WindowInteropHelper(this).Handle;
         if (hwnd == nint.Zero || _physicalWidth == 0) return;
 
-        var screen = System.Windows.Forms.Screen.FromPoint(new(physicalX, physicalY));
-        var b = screen.Bounds;
-        if (!b.Contains(physicalX, physicalY)) return;
-        if (_monitorDevice != screen.DeviceName)
+        if (_layout.At(physicalX, physicalY) is not { } monitor) return;
+        var bounds = monitor.Bounds;
+        if (_monitorDevice != monitor.DeviceName)
         {
-            _monitorDevice = screen.DeviceName;
-            OverlayPlacement.PlaceAt(hwnd, b.Left + 24, b.Top + 24);
+            _monitorDevice = monitor.DeviceName;
+            OverlayPlacement.PlaceAt(hwnd, bounds.Left + 24, bounds.Top + 24);
+            _sizeStale = true;
         }
-        UpdateLayout(); // layout is dirty only on a DPI or readout-size change
-        var scale = OverlayPlacement.GetWindowScale(hwnd);
-        _physicalWidth = (int)Math.Ceiling(ActualWidth * scale);
-        _physicalHeight = (int)Math.Ceiling(ActualHeight * scale);
-        var bounds = new TMHue.Core.Models.PixelBounds(b.Left, b.Top, b.Width, b.Height);
+        if (_sizeStale)
+        {
+            _sizeStale = false;
+            UpdateLayout();
+            var scale = OverlayPlacement.GetWindowScale(hwnd);
+            _physicalWidth = (int)Math.Ceiling(ActualWidth * scale);
+            _physicalHeight = (int)Math.Ceiling(ActualHeight * scale);
+        }
         var position = bounds.PlaceLens(physicalX, physicalY, _physicalWidth, _physicalHeight);
         var placement = (position.X, position.Y, _physicalWidth, _physicalHeight);
         if (_placement != placement)
@@ -192,5 +221,6 @@ public partial class MagnifierWindow : Window
         base.OnDpiChanged(oldDpi, newDpi);
         _physicalWidth = (int)Math.Ceiling(ActualWidth * newDpi.DpiScaleX);
         _physicalHeight = (int)Math.Ceiling(ActualHeight * newDpi.DpiScaleY);
+        _sizeStale = true;
     }
 }

@@ -26,4 +26,6 @@ Remova os certificados após o teste. Nunca use este certificado para distribui�
 
 Para distribuição pública, use um certificado de assinatura de código de produção e mantenha
 as credenciais fora do repositório. O comando de assinatura é informado ao script
-`packaging/build-installer.ps1` e deve usar timestamp. Veja `docs/security.md`.
+`packaging/velopack/build-velopack.ps1` (`-SignToolCommand`) e deve usar timestamp; na release
+oficial, o workflow assina com o certificado guardado nos segredos do GitHub. Veja
+`docs/security.md` e `docs/release-process.md`.

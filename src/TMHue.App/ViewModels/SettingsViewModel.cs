@@ -129,6 +129,14 @@ public sealed partial class SettingsViewModel : ViewModelBase
         set { _settings.ShowMagnifier = value; OnPropertyChanged(); Persist(); }
     }
 
+    /// <summary>Desligada, o app nunca consulta as GitHub Releases por conta própria; o botão
+    /// "Verificar" continua funcionando.</summary>
+    public bool AutoCheckForUpdates
+    {
+        get => _settings.AutoCheckForUpdates;
+        set { _settings.AutoCheckForUpdates = value; OnPropertyChanged(); Persist(); }
+    }
+
     /// <summary>Themes backing the settings ComboBox, in display order.</summary>
     private static readonly AppTheme[] Themes = { AppTheme.Light, AppTheme.Dark };
 

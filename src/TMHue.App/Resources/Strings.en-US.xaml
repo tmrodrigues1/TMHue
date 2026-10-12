@@ -78,6 +78,7 @@
     <sys:String x:Key="L.Settings.CopyTip4">While capturing, press the matching key to use another format for that copy only.</sys:String>
     <sys:String x:Key="L.Settings.Hotkeys">Global hotkeys</sys:String>
     <sys:String x:Key="L.Settings.Updates">Updates</sys:String>
+    <sys:String x:Key="L.Settings.AutoCheckForUpdates">Check for updates automatically</sys:String>
     <sys:String x:Key="L.Settings.Check">Check</sys:String>
     <sys:String x:Key="L.Settings.NotNow">Not now</sys:String>
     <sys:String x:Key="L.Settings.Update">Update</sys:String>
@@ -123,6 +124,8 @@
     <sys:String x:Key="L.Palette.EmptyHint">Dominant colors appear here after you load an image or capture the screen.</sys:String>
     <sys:String x:Key="L.Palette.ReadError">Could not read the image. Use PNG, JPG, BMP, GIF or WEBP.</sys:String>
     <sys:String x:Key="L.Palette.NoColors">No colors could be extracted from that image.</sys:String>
+    <sys:String x:Key="L.Palette.Loading">Loading image…</sys:String>
+    <sys:String x:Key="L.Palette.TooLarge">The image is too large. Use files up to 50 MB and 100 megapixels.</sys:String>
 
     <!-- Contrast (WCAG) -->
     <sys:String x:Key="L.Contrast.WindowTitle">Contrast (WCAG) — TMHue</sys:String>

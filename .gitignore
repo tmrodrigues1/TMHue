@@ -34,3 +34,6 @@ dist/
 .env
 .env.*
 appsettings.Local.json
+
+# Scratch output (screenshots, diagnostics dumps)
+.tmp/

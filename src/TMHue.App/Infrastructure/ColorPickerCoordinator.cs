@@ -12,6 +12,10 @@ namespace TMHue.App.Infrastructure;
 /// dispatcher work and the temporary cancellation hotkey.</summary>
 public sealed partial class ColorPickerCoordinator
 {
+    // Esc is a system-wide hotkey while a capture is being prepared; a stuck preparation must
+    // not keep it captured.
+    private static readonly TimeSpan PreparationTimeout = TimeSpan.FromSeconds(5);
+
     private readonly IScreenColorSampler _sampler;
     private readonly IClipboardService _clipboard;
     private readonly IColorHistoryService _history;
@@ -54,6 +58,10 @@ public sealed partial class ColorPickerCoordinator
     public event EventHandler<RgbColor>? HoverColorChanged;
     public event EventHandler<CopyFormat>? ActiveFormatChanged;
 
+    /// <summary>Raised after every capture exit (captured, cancelled or failed), once all
+    /// session resources have been released.</summary>
+    public event EventHandler? CaptureFinished;
+
     public void CancelCapture()
     {
         if (State is PickerState.Picking or PickerState.Preparing) Finish(PickerState.Cancelled);
@@ -81,7 +89,18 @@ public sealed partial class ColorPickerCoordinator
             var layout = new MonitorLayout();
             _hotkeys.TryRegister(HotkeyIds.CancelCapture,
                 new HotkeyDefinition { Modifiers = new List<string>(), Key = "ESCAPE" });
-            prepared = await Task.Run(() => PickerCaptureResources.Prepare(_sampler, layout, output, freeze, token), token);
+            cancellation.CancelAfter(PreparationTimeout);
+            var preparation = Task.Run(() => PickerCaptureResources.Prepare(_sampler, layout, output, freeze, token), token);
+            try
+            {
+                // WaitAsync returns on cancellation/timeout even if the worker itself is stuck.
+                prepared = await preparation.WaitAsync(token);
+            }
+            catch
+            {
+                DisposeWhenCompleted(preparation);
+                throw;
+            }
             if (generation != _generation || State != PickerState.Preparing)
             { prepared.Dispose(); return; }
             _resources = prepared;
@@ -104,7 +123,7 @@ public sealed partial class ColorPickerCoordinator
 
             if (showMagnifier)
             {
-                _magnifier = new MagnifierWindow();
+                _magnifier = new MagnifierWindow(layout);
                 _magnifier.Show();
                 if (!_magnifier.CaptureExclusionStatus.Succeeded)
                 {
@@ -214,7 +233,14 @@ public sealed partial class ColorPickerCoordinator
         State = finalState;
         Cleanup();
         State = PickerState.Idle;
+        CaptureFinished?.Invoke(this, EventArgs.Empty);
     }
+
+    /// <summary>An abandoned preparation may still finish later; its snapshot must not outlive it.</summary>
+    private static void DisposeWhenCompleted(Task<PickerCaptureResources> preparation) =>
+        preparation.ContinueWith(static completed => completed.Result.Dispose(), CancellationToken.None,
+            TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.ExecuteSynchronously,
+            TaskScheduler.Default);
 
     private void Cleanup()
     {

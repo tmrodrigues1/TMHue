@@ -85,7 +85,7 @@
                             BorderBrush="{DynamicResource Brush.BorderStrong}" BorderThickness="1"
                             Background="{Binding CurrentBrush}" Margin="-14,0,0,0">
                         <Border.Effect>
-                            <DropShadowEffect Color="{Binding CurrentBrush.Color}" BlurRadius="22"
+                            <DropShadowEffect Color="{Binding GlowColor}" BlurRadius="22"
                                               ShadowDepth="0" Opacity="0.6" />
                         </Border.Effect>
                     </Border>

@@ -36,43 +36,50 @@ public sealed class UpdateService
     private readonly AppSettings _settings;
     private readonly ISettingsRepository _settingsRepository;
     private readonly Action<Exception> _logError;
-    private readonly UpdateManager _manager;
+    // Sob demanda: criar o UpdateManager inspeciona a instalação, e a maioria dos inícios não
+    // chega a consultar atualizações (intervalo de 24 h ou checagem automática desligada).
+    private readonly Lazy<UpdateManager> _manager = new(() =>
+        new UpdateManager(new GithubSource(RepoUrl, accessToken: null, prerelease: false)));
 
-    private UpdateInfo? _pendingUpdate;
-    private bool _busy;
+    // Lidos e escritos tanto pela thread da UI quanto por continuações no pool.
+    private volatile UpdateInfo? _pendingUpdate;
+    private int _busy;
 
     public UpdateService(AppSettings settings, ISettingsRepository settingsRepository, Action<Exception> logError)
     {
         _settings = settings;
         _settingsRepository = settingsRepository;
         _logError = logError;
-        _manager = new UpdateManager(new GithubSource(RepoUrl, accessToken: null, prerelease: false));
     }
 
     /// <summary>Nova versão encontrada; o argumento é a versão alvo (ex.: "1.2.0").
     /// Disparado no dispatcher da UI.</summary>
     public event EventHandler<string>? UpdateAvailable;
 
-    public bool IsInstalled => _manager.IsInstalled;
+    public bool IsInstalled => _manager.Value.IsInstalled;
 
     /// <summary>Versão da atualização pendente encontrada pela última checagem (ex.: "1.2.0"),
     /// ou null se não há atualização aguardando consentimento do usuário.</summary>
     public string? PendingVersion => _pendingUpdate?.TargetFullRelease.Version.ToString();
 
     public string CurrentVersionDisplay =>
-        _manager.IsInstalled && _manager.CurrentVersion is not null
-            ? _manager.CurrentVersion.ToString()
+        _manager.Value.IsInstalled && _manager.Value.CurrentVersion is not null
+            ? _manager.Value.CurrentVersion.ToString()
             : (System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "?");
 
-    /// <summary>Checagem automática em segundo plano: respeita o intervalo de 24 h, tem
-    /// timeout curto e nunca lança. Chamar depois que a UI já estiver disponível.</summary>
+    /// <summary>Checagem automática em segundo plano: respeita a preferência do usuário e o
+    /// intervalo de 24 h, tem timeout curto e nunca lança. Chamar depois que a UI já estiver
+    /// disponível.</summary>
     public void CheckInBackground()
     {
-        if (!_manager.IsInstalled)
+        if (!_settings.AutoCheckForUpdates)
             return;
 
         var last = _settings.LastUpdateCheckUtc;
         if (last is not null && DateTime.UtcNow - last < AutoCheckInterval)
+            return;
+
+        if (!_manager.Value.IsInstalled)
             return;
 
         _ = CheckAsync(manual: false);
@@ -96,7 +103,7 @@ public sealed class UpdateService
     /// automática, mas respeita o intervalo mínimo de 2 h entre verificações manuais.</summary>
     public async Task<UpdateCheckResult> CheckManuallyAsync()
     {
-        if (!_manager.IsInstalled)
+        if (!_manager.Value.IsInstalled)
             return UpdateCheckResult.NotInstalled;
 
         if (ManualCheckCooldownRemaining is not null)
@@ -115,18 +122,22 @@ public sealed class UpdateService
 
     private async Task<UpdateCheckResult> CheckAsync(bool manual)
     {
-        if (_busy)
+        if (Interlocked.Exchange(ref _busy, 1) == 1)
             return _pendingUpdate is null ? UpdateCheckResult.Failed : UpdateCheckResult.UpdateAvailable;
 
-        _busy = true;
         try
         {
             // CheckForUpdatesAsync não aceita CancellationToken; WaitAsync impõe o timeout
             // curto para a checagem nunca segurar nada por muito tempo.
-            var info = await _manager.CheckForUpdatesAsync().WaitAsync(CheckTimeout).ConfigureAwait(false);
+            var info = await _manager.Value.CheckForUpdatesAsync().WaitAsync(CheckTimeout).ConfigureAwait(false);
 
-            _settings.LastUpdateCheckUtc = DateTime.UtcNow;
-            TryPersistSettings();
+            // AppSettings pertence à thread da UI: alterar e gravar daqui (pool) correria contra
+            // as gravações feitas pela janela principal e pelas Configurações.
+            await RunOnUiThreadAsync(() =>
+            {
+                _settings.LastUpdateCheckUtc = DateTime.UtcNow;
+                TryPersistSettings();
+            }).ConfigureAwait(false);
 
             if (info is null)
                 return UpdateCheckResult.UpToDate;
@@ -143,7 +154,7 @@ public sealed class UpdateService
         }
         finally
         {
-            _busy = false;
+            Volatile.Write(ref _busy, 0);
         }
     }
 
@@ -158,8 +169,8 @@ public sealed class UpdateService
 
         try
         {
-            await _manager.DownloadUpdatesAsync(update, progress).ConfigureAwait(false);
-            await RunOnUiThreadAsync(() => _manager.ApplyUpdatesAndRestart(update)).ConfigureAwait(false);
+            await _manager.Value.DownloadUpdatesAsync(update, progress).ConfigureAwait(false);
+            await RunOnUiThreadAsync(() => _manager.Value.ApplyUpdatesAndRestart(update)).ConfigureAwait(false);
             return true;
         }
         catch (Exception ex)

@@ -1,0 +1,42 @@
+# O TMHue é publicado self-contained: o runtime .NET vai embutido no pacote, e as correções de
+# segurança do runtime só chegam aos usuários quando uma nova versão do TMHue é lançada.
+# Este workflow abre, todo mês, uma issue lembrando de recompilar e publicar depois do Patch
+# Tuesday da Microsoft (segunda terça-feira do mês; o dia 15 sempre cai depois dele).
+#
+# Observação: o GitHub desativa workflows agendados após 60 dias sem atividade no repositório.
+name: runtime-refresh
+
+on:
+  schedule:
+    - cron: '0 12 15 * *'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Abrir issue de rebuild mensal
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          title="Rebuild mensal: atualizar o runtime .NET embutido"
+          existing=$(gh issue list --state open --search "in:title \"$title\"" --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            echo "A issue #$existing ainda está aberta; nada a fazer."
+            exit 0
+          fi
+          gh issue create --title "$title" --body "$(cat <<'EOF'
+          O TMHue embute o runtime .NET (publish self-contained). As correções de segurança do runtime só chegam aos usuários em uma nova release.
+
+          - [ ] Conferir se há atualização de serviço do .NET 10 neste mês: https://dotnet.microsoft.com/download/dotnet/10.0
+          - [ ] Se houver, atualizar a seção do `CHANGELOG.md`, incrementar a versão em `src/TMHue.App/TMHue.App.csproj` e publicar a tag `vX.Y.Z` (o workflow `release` usa o SDK 10.0.x mais recente, que traz o runtime corrigido)
+          - [ ] Confirmar na release publicada que `Setup.exe` está assinado e que `SHA256SUMS.txt` foi anexado
+          - [ ] Fechar esta issue (mesmo quando não houver atualização no mês)
+
+          Alternativa de longo prazo: publicar framework-dependent e deixar o Velopack instalar o runtime compartilhado, que passa a ser atualizado pelo Microsoft Update (ver `docs/release-process.md`).
+          EOF
+          )"

@@ -53,10 +53,10 @@ public partial class PaletteExtractorWindow : Window
         e.Handled = true;
     }
 
-    private void OnDrop(object sender, System.Windows.DragEventArgs e)
+    private async void OnDrop(object sender, System.Windows.DragEventArgs e)
     {
         if (GetDroppedImagePath(e) is { } path)
-            ViewModel.LoadFromFile(path);
+            await ViewModel.LoadFromFileAsync(path);
     }
 
     private static string? GetDroppedImagePath(System.Windows.DragEventArgs e)

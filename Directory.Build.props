@@ -1,0 +1,13 @@
+<Project>
+
+  <PropertyGroup>
+    <!-- Builds reproduzíveis: cada projeto grava packages.lock.json com as versões e os hashes
+         resolvidos, e o CI restaura em modo travado (locked mode; falha se o grafo de pacotes mudar sem
+         o lock ser atualizado no mesmo commit). -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+
+    <!-- Audita também as dependências transitivas contra vulnerabilidades conhecidas. -->
+    <NuGetAuditMode>all</NuGetAuditMode>
+  </PropertyGroup>
+
+</Project>

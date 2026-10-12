@@ -1,0 +1,52 @@
+# Integração contínua: compila, testa e audita os pacotes NuGet em cada push/PR para a main.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+        with:
+          dotnet-version: '10.0.x'
+
+      # Modo travado: falha se o grafo de pacotes divergir dos packages.lock.json versionados.
+      - name: Restaurar pacotes
+        shell: pwsh
+        run: |
+          dotnet restore TMHue.sln --locked-mode
+          if ($LASTEXITCODE -ne 0) { throw 'Falha no dotnet restore (modo travado).' }
+
+      - name: Compilar
+        shell: pwsh
+        run: |
+          dotnet build TMHue.sln -c Release --no-restore
+          if ($LASTEXITCODE -ne 0) { throw 'Falha no build.' }
+
+      - name: Testar
+        shell: pwsh
+        run: |
+          dotnet test TMHue.sln -c Release --no-build
+          if ($LASTEXITCODE -ne 0) { throw 'Testes falharam.' }
+
+      # "dotnet list package" sai com código 0 mesmo quando encontra pacotes vulneráveis, e
+      # também quando não consegue baixar os dados de vulnerabilidade (NU1900). Os dois casos
+      # são tratados como falha: um resultado que não pôde ser verificado não é um resultado limpo.
+      - name: Auditar pacotes NuGet
+        shell: pwsh
+        run: |
+          $report = dotnet list TMHue.sln package --vulnerable --include-transitive 2>&1 | Out-String
+          Write-Host $report
+          if ($LASTEXITCODE -ne 0) { throw 'Falha ao auditar os pacotes NuGet.' }
+          if ($report -match 'NU1900') { throw 'Os dados de vulnerabilidade do NuGet não puderam ser baixados; auditoria inconclusiva.' }
+          if ($report -match 'has the following vulnerable packages') { throw 'Há pacotes NuGet com vulnerabilidades conhecidas.' }

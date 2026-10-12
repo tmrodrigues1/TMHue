@@ -1,5 +1,8 @@
 using System.ComponentModel;
+using System.IO;
+using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using TMHue.Core.Interfaces;
@@ -7,10 +10,112 @@ using TMHue.Core.Models;
 using TMHue.Core.Services;
 using TMHue.Core.ValueObjects;
 using TMHue.Windows.Display;
+using TMHue.Windows.Native;
 
 namespace TMHue.Windows.Sampling;
 
-public sealed record FrozenMonitorFrame(MonitorArea Monitor, byte[] Pixels, BitmapSource Image);
+/// <summary>One monitor's snapshot. The screen is copied once, into a shared-memory section
+/// that backs both the displayed <see cref="Image"/> and every pixel read: 4 bytes per pixel,
+/// outside the managed heap, wiped on disposal.</summary>
+public sealed unsafe class FrozenMonitorFrame : IDisposable
+{
+    private readonly MemoryMappedFile _section;
+    private readonly nint _byteCount;
+    private nint _bitmap;
+    private byte* _pixels;
+
+    private FrozenMonitorFrame(MonitorArea monitor, MemoryMappedFile section, nint bitmap, byte* pixels,
+        nint byteCount, BitmapSource image)
+    {
+        Monitor = monitor; _section = section; _bitmap = bitmap; _pixels = pixels; _byteCount = byteCount;
+        Image = image;
+    }
+
+    public MonitorArea Monitor { get; }
+    public BitmapSource Image { get; }
+
+    internal static FrozenMonitorFrame Capture(MonitorArea monitor)
+    {
+        var bounds = monitor.Bounds;
+        var byteCount = checked(bounds.Width * bounds.Height * 4);
+        var section = MemoryMappedFile.CreateNew(null, byteCount, MemoryMappedFileAccess.ReadWrite);
+        var bitmap = nint.Zero;
+        try
+        {
+            var sectionHandle = section.SafeMemoryMappedFileHandle.DangerousGetHandle();
+            var header = new NativeMethods.BITMAPINFOHEADER
+            {
+                biSize = (uint)sizeof(NativeMethods.BITMAPINFOHEADER),
+                biWidth = bounds.Width,
+                biHeight = -bounds.Height, // top-down, matching the image's row order
+                biPlanes = 1,
+                biBitCount = 32,
+                biCompression = NativeMethods.BI_RGB
+            };
+            bitmap = NativeMethods.CreateDIBSection(nint.Zero, in header, NativeMethods.DIB_RGB_COLORS,
+                out var pixels, sectionHandle, 0);
+            if (bitmap == nint.Zero || pixels == nint.Zero)
+                throw new Win32Exception(Marshal.GetLastPInvokeError());
+
+            CopyScreen(bitmap, bounds);
+            var image = Imaging.CreateBitmapSourceFromMemorySection(sectionHandle, bounds.Width, bounds.Height,
+                PixelFormats.Bgr32, bounds.Width * 4, 0);
+            image.Freeze();
+            return new(monitor, section, bitmap, (byte*)pixels, byteCount, image);
+        }
+        catch
+        {
+            if (bitmap != nint.Zero) NativeMethods.DeleteObject(bitmap);
+            section.Dispose();
+            throw;
+        }
+    }
+
+    private static void CopyScreen(nint bitmap, PixelBounds bounds)
+    {
+        var screen = NativeMethods.GetDC(nint.Zero);
+        if (screen == nint.Zero) throw new Win32Exception("Unable to access the screen device context.");
+        var memory = nint.Zero;
+        var previous = nint.Zero;
+        try
+        {
+            memory = NativeMethods.CreateCompatibleDC(screen);
+            if (memory == nint.Zero) throw new Win32Exception("Unable to create a memory device context.");
+            previous = NativeMethods.SelectObject(memory, bitmap);
+            if (!NativeMethods.BitBlt(memory, 0, 0, bounds.Width, bounds.Height,
+                    screen, bounds.Left, bounds.Top, NativeMethods.SRCCOPY))
+                throw new Win32Exception(Marshal.GetLastPInvokeError());
+        }
+        finally
+        {
+            if (previous != nint.Zero) NativeMethods.SelectObject(memory, previous);
+            if (memory != nint.Zero) NativeMethods.DeleteDC(memory);
+            NativeMethods.ReleaseDC(nint.Zero, screen);
+        }
+    }
+
+    internal bool TryReadPixel(int x, int y, out RgbColor color)
+    {
+        color = default;
+        var bounds = Monitor.Bounds;
+        if (_pixels is null || !bounds.Contains(x, y)) return false;
+        var pixel = _pixels + ((nint)(y - bounds.Top) * bounds.Width + (x - bounds.Left)) * 4;
+        color = new(pixel[2], pixel[1], pixel[0]);
+        return true;
+    }
+
+    /// <summary>Wipes the pixels through the shared section before releasing it, so the copy
+    /// still mapped by <see cref="Image"/> holds no screen content while it awaits collection.</summary>
+    public void Dispose()
+    {
+        if (_pixels is null) return;
+        NativeMemory.Clear(_pixels, (nuint)_byteCount);
+        _pixels = null;
+        NativeMethods.DeleteObject(_bitmap);
+        _bitmap = nint.Zero;
+        _section.Dispose();
+    }
+}
 
 /// <summary>Exact physical pixels captured before picker windows exist. Snapshots stay in
 /// memory only, have a hard allocation budget and are discarded on every selection exit.</summary>
@@ -25,7 +130,7 @@ public sealed class FrozenScreenSampler : IScreenColorSampler, IDisposable
     {
         sampler = null;
         cancellation.ThrowIfCancellationRequested();
-        var bytesNeeded = layout.Monitors.Sum(m => (long)m.Bounds.Width * m.Bounds.Height * 12);
+        var bytesNeeded = layout.Monitors.Sum(m => (long)m.Bounds.Width * m.Bounds.Height * 4);
         if (bytesNeeded <= 0 || bytesNeeded > MaxMemoryBytes) return false;
         var result = new FrozenScreenSampler();
         var frames = new List<FrozenMonitorFrame>();
@@ -34,22 +139,7 @@ public sealed class FrozenScreenSampler : IScreenColorSampler, IDisposable
             foreach (var monitor in layout.Monitors)
             {
                 cancellation.ThrowIfCancellationRequested();
-                var b = monitor.Bounds;
-                using var bitmap = new System.Drawing.Bitmap(b.Width, b.Height,
-                    System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-                using (var graphics = System.Drawing.Graphics.FromImage(bitmap))
-                    graphics.CopyFromScreen(b.Left, b.Top, 0, 0, new(b.Width, b.Height));
-                cancellation.ThrowIfCancellationRequested();
-                var bytes = new byte[checked(b.Width * b.Height * 4)];
-                var data = bitmap.LockBits(new(0, 0, b.Width, b.Height),
-                    System.Drawing.Imaging.ImageLockMode.ReadOnly,
-                    System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-                try { Marshal.Copy(data.Scan0, bytes, 0, bytes.Length); }
-                finally { bitmap.UnlockBits(data); }
-                var image = BitmapSource.Create(b.Width, b.Height, 96, 96, PixelFormats.Bgr32,
-                    null, bytes, b.Width * 4);
-                image.Freeze();
-                frames.Add(new(monitor, bytes, image));
+                frames.Add(FrozenMonitorFrame.Capture(monitor));
             }
             cancellation.ThrowIfCancellationRequested();
             result.Frames = frames;
@@ -58,13 +148,13 @@ public sealed class FrozenScreenSampler : IScreenColorSampler, IDisposable
         }
         catch (OperationCanceledException)
         {
-            foreach (var frame in frames) Array.Clear(frame.Pixels);
+            foreach (var frame in frames) frame.Dispose();
             result.Dispose();
             throw;
         }
-        catch (Exception error) when (error is Win32Exception or ExternalException or OutOfMemoryException)
+        catch (Exception error) when (error is Win32Exception or ExternalException or OutOfMemoryException or IOException)
         {
-            foreach (var frame in frames) Array.Clear(frame.Pixels);
+            foreach (var frame in frames) frame.Dispose();
             result.Dispose();
             return false;
         }
@@ -75,13 +165,7 @@ public sealed class FrozenScreenSampler : IScreenColorSampler, IDisposable
         ObjectDisposedException.ThrowIf(_disposed, this);
         color = default;
         foreach (var frame in Frames)
-        {
-            var b = frame.Monitor.Bounds;
-            if (!b.Contains(x, y)) continue;
-            var offset = ((y - b.Top) * b.Width + x - b.Left) * 4;
-            color = new(frame.Pixels[offset + 2], frame.Pixels[offset + 1], frame.Pixels[offset]);
-            return true;
-        }
+            if (frame.TryReadPixel(x, y, out color)) return true;
         return false;
     }
 
@@ -128,7 +212,7 @@ public sealed class FrozenScreenSampler : IScreenColorSampler, IDisposable
     {
         if (_disposed) return;
         _disposed = true;
-        foreach (var frame in Frames) Array.Clear(frame.Pixels);
+        foreach (var frame in Frames) frame.Dispose();
         Frames = Array.Empty<FrozenMonitorFrame>();
         _sample?.Clear(); _sample = null;
     }

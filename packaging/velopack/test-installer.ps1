@@ -3,7 +3,8 @@
 # Gera um Setup.exe com payload inflado (para a splash "Color Scan" ficar visível por tempo
 # suficiente), executa a instalação real e mostra um relatório:
 # pasta de instalação, atalhos, entrada em "Aplicativos instalados" e preservação dos dados
-# do usuário. NUNCA distribua o build gerado por este script.
+# do usuário na instalação. Com -Uninstall, verifica que NADA fica para trás, inclusive os
+# dados do usuário. NUNCA distribua o build gerado por este script.
 #
 # Uso:
 #   .\packaging\velopack\test-installer.ps1                 # build + instala + relatório
@@ -63,7 +64,20 @@ if ($Uninstall) {
     Write-Host "`n=== Verificação pós-desinstalação ===" -ForegroundColor Cyan
     Write-Check (-not (Test-Path (Join-Path $installDir 'current'))) "Pasta de instalação removida ($installDir)"
     Write-Check ($null -eq (Get-InstalledEntry)) 'Entrada removida de "Aplicativos instalados"'
-    Write-Check (Test-Path $dataDir) "Dados do usuário PRESERVADOS ($dataDir)"
+    Write-Check (-not (Test-Path $installDir)) "Raiz da instalação removida ($installDir)"
+    Write-Check (-not (Test-Path $dataDir)) "Dados do usuário removidos ($dataDir)"
+    $runValue = (Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -ErrorAction SilentlyContinue).PSObject.Properties['TMHue']
+    Write-Check ($null -eq $runValue) 'Valor "TMHue" removido de HKCU\...\Run'
+    $trayEntries = @(Get-ChildItem 'HKCU:\Control Panel\NotifyIconSettings' -ErrorAction SilentlyContinue |
+        Where-Object { "$((Get-ItemProperty $_.PSPath).ExecutablePath)".StartsWith($installDir, [StringComparison]::OrdinalIgnoreCase) })
+    Write-Check ($trayEntries.Count -eq 0) 'Registro do ícone da bandeja removido'
+    $shortcuts = @((Join-Path ([Environment]::GetFolderPath('Desktop')) 'TMHue.lnk'),
+        (Join-Path ([Environment]::GetFolderPath('StartMenu')) 'Programs\TMHue.lnk')) | Where-Object { Test-Path $_ }
+    Write-Check (@($shortcuts).Count -eq 0) 'Atalhos removidos (área de trabalho e Menu Iniciar)'
+    # O log do Velopack só sai alguns segundos depois de o desinstalador fechar.
+    Start-Sleep -Seconds 8
+    $velopackLog = Join-Path $env:LOCALAPPDATA "velopack\velopack_$packId.log"
+    Write-Check (-not (Test-Path $velopackLog)) "Log do Velopack removido ($velopackLog)"
     exit 0
 }
 
@@ -87,11 +101,18 @@ Write-Host '  3. Nenhum prompt de UAC (instalação por usuário)'
 Write-Host '  4. TMHue abre automaticamente ao concluir'
 Write-Host ''
 
+# WaitForExit espera apenas o Setup.exe. "Start-Process -Wait" espera também os processos
+# filhos — inclusive o TMHue que o Setup abre ao concluir — e só retornaria com o app fechado.
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
-Start-Process $setup -Wait
+$setupProcess = Start-Process $setup -PassThru
+$setupProcess.WaitForExit()
 $sw.Stop()
 
-# O Setup retorna quando termina; o app abre em seguida. Dá um instante para o processo subir.
+# O Setup retorna quando termina; o app abre em seguida. Espera o processo subir (até 60 s).
+$deadline = (Get-Date).AddSeconds(60)
+while (-not (Get-Process TMHue -ErrorAction SilentlyContinue) -and (Get-Date) -lt $deadline) {
+    Start-Sleep -Seconds 1
+}
 Start-Sleep -Seconds 3
 
 Write-Host "`n=== Relatório da instalação ===" -ForegroundColor Cyan

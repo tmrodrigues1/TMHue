@@ -56,6 +56,39 @@ public class ColorHistoryServiceTests : IDisposable
         Assert.False(File.Exists(_tempFile));
     }
 
+    [Fact]
+    public void Load_DropsEntriesWithoutAValidHex_AndStillAcceptsNewCaptures()
+    {
+        File.WriteAllText(_tempFile, """
+            [
+              { "Hex": "#2F80ED", "Red": 47, "Green": 128, "Blue": 237, "CapturedAt": "2026-10-11T09:00:00+00:00" },
+              { "Hex": null, "Red": 1, "Green": 1, "Blue": 1, "CapturedAt": "2026-10-11T09:00:00+00:00" },
+              { "Hex": "red", "Red": 255, "Green": 0, "Blue": 0, "CapturedAt": "2026-10-11T09:00:00+00:00" },
+              { "Hex": "#12345G", "Red": 0, "Green": 0, "Blue": 0, "CapturedAt": "2026-10-11T09:00:00+00:00" },
+              null
+            ]
+            """);
+        var service = new ColorHistoryService(_tempFile);
+
+        service.Load();
+        service.Add(new CapturedColor("#111111", 17, 17, 17, DateTimeOffset.Now));
+
+        Assert.Equal(new[] { "#111111", "#2F80ED" }, service.Items.Select(color => color.Hex));
+    }
+
+    [Fact]
+    public void Load_TruncatesOversizedCaptureSource()
+    {
+        var source = new string('s', 5000);
+        File.WriteAllText(_tempFile,
+            $$"""[{ "Hex": "#2F80ED", "Red": 47, "Green": 128, "Blue": 237, "CapturedAt": "2026-10-11T09:00:00+00:00", "CaptureSource": "{{source}}" }]""");
+        var service = new ColorHistoryService(_tempFile);
+
+        service.Load();
+
+        Assert.Equal(128, Assert.Single(service.Items).CaptureSource?.Length);
+    }
+
     public void Dispose()
     {
         if (File.Exists(_tempFile)) File.Delete(_tempFile);

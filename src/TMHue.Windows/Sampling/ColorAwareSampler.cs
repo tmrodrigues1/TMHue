@@ -13,7 +13,9 @@ public sealed class ColorAwareSampler : IScreenColorSampler, IDisposable
     private readonly IScreenColorSampler _source;
     private readonly CaptureColorOutput _output;
     private readonly MonitorLayout _layout;
-    private readonly Dictionary<string, DisplayColorInfo> _metadata;
+    // Per monitor, aligned with _layout.Monitors and resolved once: the picker reads up to 30
+    // times per second, and neither the metadata nor its description changes within a session.
+    private readonly MonitorSource[] _sources;
     private readonly Dictionary<string, IccColorTransform> _transforms = new(StringComparer.OrdinalIgnoreCase);
     private readonly bool _frozen;
     private bool _disposed;
@@ -26,7 +28,12 @@ public sealed class ColorAwareSampler : IScreenColorSampler, IDisposable
         _source = source; _output = output; _layout = layout;
         _frozen = source is FrozenScreenSampler;
         Environment = environment;
-        _metadata = environment.ToDictionary(m => m.DeviceName, StringComparer.OrdinalIgnoreCase);
+        var metadata = environment.ToDictionary(m => m.DeviceName, StringComparer.OrdinalIgnoreCase);
+        _sources = layout.Monitors.Select(monitor =>
+        {
+            metadata.TryGetValue(monitor.DeviceName, out var info);
+            return new MonitorSource(info, Describe(info));
+        }).ToArray();
         if (output != CaptureColorOutput.Srgb || srgbProfile is null) return;
         foreach (var info in environment)
         {
@@ -41,9 +48,9 @@ public sealed class ColorAwareSampler : IScreenColorSampler, IDisposable
         ObjectDisposedException.ThrowIf(_disposed, this);
         ColorManagementFailed = false;
         if (!_source.TryReadRegion(x, y, side, out sample) || sample is null) return false;
-        var center = _layout.At(x, y);
-        if (center is null) { sample.Clear(); sample = null; return false; }
-        _metadata.TryGetValue(center.DeviceName, out var info);
+        var center = IndexOfMonitorAt(x, y);
+        if (center < 0) { sample.Clear(); sample = null; return false; }
+        var source = _sources[center];
         var left = x - side / 2; var top = y - side / 2;
         if (_output == CaptureColorOutput.Srgb)
         {
@@ -59,13 +66,28 @@ public sealed class ColorAwareSampler : IScreenColorSampler, IDisposable
                 }
             }
         }
+        sample.SourceDescription = source.Description;
+        sample.ColorOutput = _output; sample.AdvancedColorActive = source.Info?.AdvancedColorActive; sample.IsFrozen = _frozen;
+        return true;
+    }
+
+    private sealed record MonitorSource(DisplayColorInfo? Info, string Description);
+
+    private string Describe(DisplayColorInfo? info)
+    {
         var mode = info?.AdvancedColorActive switch { true => "HDR/WCG · 8-bit limited", false => "SDR", _ => "display mode unknown" };
-        sample.SourceDescription = _output == CaptureColorOutput.Srgb
+        var description = _output == CaptureColorOutput.Srgb
             ? $"sRGB · ICC ({Path.GetFileName(info?.ProfilePath)})"
             : $"GDI · RGB 8-bit · {mode}";
-        if (_frozen) sample.SourceDescription += " · frozen";
-        sample.ColorOutput = _output; sample.AdvancedColorActive = info?.AdvancedColorActive; sample.IsFrozen = _frozen;
-        return true;
+        return _frozen ? description + " · frozen" : description;
+    }
+
+    private int IndexOfMonitorAt(int x, int y)
+    {
+        var monitors = _layout.Monitors;
+        for (var i = 0; i < monitors.Count; i++)
+            if (monitors[i].Bounds.Contains(x, y)) return i;
+        return -1;
     }
 
     public bool TryReadPixel(int x, int y, out RgbColor color)

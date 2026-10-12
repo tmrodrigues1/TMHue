@@ -32,11 +32,6 @@ public sealed class ThemeService : IThemeService, IDisposable
             _ => IsSystemDarkTheme()
         };
 
-        if (isDark == IsDarkEffective && Application.Current.Resources.MergedDictionaries.Count > 0)
-        {
-            // still (re)apply on first call
-        }
-
         IsDarkEffective = isDark;
         ApplyDictionary(isDark);
         EffectiveThemeChanged?.Invoke(this, EventArgs.Empty);

@@ -26,6 +26,11 @@ public sealed class PaletteExtractorViewModel : ViewModelBase
     // upscales — images narrower than this decode at their natural size.
     private const int MaxPreviewDecodeWidth = 1024;
 
+    // Refused before any pixel is decoded: a dropped file is untrusted input, and even the
+    // capped decode above has to walk the whole compressed stream.
+    private const long MaxFileBytes = 50L * 1024 * 1024;
+    private const long MaxSourcePixels = 100_000_000;
+
     private readonly IClipboardService _clipboard;
     private readonly INotificationService _notifications;
     private readonly Func<AppSettings> _settingsAccessor;
@@ -53,21 +58,53 @@ public sealed class PaletteExtractorViewModel : ViewModelBase
     private string? _errorMessage;
     public string? ErrorMessage { get => _errorMessage; private set => SetField(ref _errorMessage, value); }
 
+    private bool _isLoading;
+    /// <summary>True while a dropped file is being decoded off the UI thread.</summary>
+    public bool IsLoading { get => _isLoading; private set => SetField(ref _isLoading, value); }
+
+    // Bumped by every load and by Clear(), so a slow decode that was superseded is discarded.
+    private int _loadGeneration;
+
+    private sealed record DecodedImage(BitmapSource? Preview, IReadOnlyList<RgbColor> Colors, string? ErrorResource);
+
     /// <summary>Loads an image the user dropped onto the window. Decoding happens locally via
-    /// WPF's own decoders; the file is read once and never leaves the machine. Loaded through a
-    /// stream (not UriSource) deliberately: WPF caches URI-loaded bitmaps process-wide, and this
-    /// feature guarantees no image data lingers anywhere after the window is cleared/closed —
-    /// it also means dropping the same file again always re-reads the current file contents.</summary>
-    public void LoadFromFile(string path)
+    /// WPF's own decoders, off the UI thread; the file is read once and never leaves the machine.
+    /// Loaded through a stream (not UriSource) deliberately: WPF caches URI-loaded bitmaps
+    /// process-wide, and this feature guarantees no image data lingers anywhere after the window
+    /// is cleared/closed — it also means dropping the same file again always re-reads the
+    /// current file contents.</summary>
+    public async Task LoadFromFileAsync(string path)
+    {
+        var generation = ++_loadGeneration;
+        ErrorMessage = null;
+        IsLoading = true;
+
+        var decoded = await Task.Run(() => Decode(path));
+        if (generation != _loadGeneration) return;
+
+        IsLoading = false;
+        if (decoded.Preview is null)
+            ErrorMessage = Infrastructure.LocalizationService.Get(decoded.ErrorResource ?? "L.Palette.ReadError");
+        else
+            ShowPalette(decoded.Preview, decoded.Colors);
+    }
+
+    /// <summary>Runs on a worker thread. Everything returned is frozen or immutable.</summary>
+    private static DecodedImage Decode(string path)
     {
         try
         {
             using var stream = System.IO.File.OpenRead(path);
+            if (stream.Length > MaxFileBytes)
+                return new(null, Array.Empty<RgbColor>(), "L.Palette.TooLarge");
 
-            // Header-only pass to learn the natural width without decoding any pixels, so the
-            // decode cap below never upscales small images.
-            var naturalWidth = BitmapDecoder.Create(
-                stream, BitmapCreateOptions.DelayCreation, BitmapCacheOption.None).Frames[0].PixelWidth;
+            // Header-only pass to learn the natural size without decoding any pixels: it rejects
+            // decompression bombs and keeps the decode cap below from upscaling small images.
+            var header = BitmapDecoder.Create(
+                stream, BitmapCreateOptions.DelayCreation, BitmapCacheOption.None).Frames[0];
+            var naturalWidth = header.PixelWidth;
+            if ((long)naturalWidth * header.PixelHeight > MaxSourcePixels)
+                return new(null, Array.Empty<RgbColor>(), "L.Palette.TooLarge");
             stream.Position = 0;
 
             var bitmap = new BitmapImage();
@@ -79,11 +116,11 @@ public sealed class PaletteExtractorViewModel : ViewModelBase
             bitmap.EndInit();
             bitmap.Freeze();
 
-            SetSource(bitmap);
+            return new(bitmap, PaletteExtractor.Extract(SamplePixels(bitmap), PaletteSize), null);
         }
         catch
         {
-            ErrorMessage = Infrastructure.LocalizationService.Get("L.Palette.ReadError");
+            return new(null, Array.Empty<RgbColor>(), "L.Palette.ReadError");
         }
     }
 
@@ -91,6 +128,8 @@ public sealed class PaletteExtractorViewModel : ViewModelBase
     /// privacy, so no pixel data outlives the feature's use (also called when the window closes).</summary>
     public void Clear()
     {
+        _loadGeneration++;
+        IsLoading = false;
         PreviewImage = null;
         Palette.Clear();
         ErrorMessage = null;
@@ -98,16 +137,18 @@ public sealed class PaletteExtractorViewModel : ViewModelBase
     }
 
     /// <summary>Loads pixels captured from a screen region (already a BitmapSource).</summary>
-    public void LoadFromCapture(BitmapSource capture) => SetSource(capture);
+    public void LoadFromCapture(BitmapSource capture)
+    {
+        _loadGeneration++;
+        IsLoading = false;
+        ShowPalette(capture, PaletteExtractor.Extract(SamplePixels(capture), PaletteSize));
+    }
 
-    private void SetSource(BitmapSource source)
+    private void ShowPalette(BitmapSource source, IReadOnlyList<RgbColor> colors)
     {
         ErrorMessage = null;
         PreviewImage = source;
         OnPropertyChanged(nameof(HasImage));
-
-        var pixels = SamplePixels(source);
-        var colors = PaletteExtractor.Extract(pixels, PaletteSize);
 
         var format = _settingsAccessor().CopyFormat;
         Palette.Clear();

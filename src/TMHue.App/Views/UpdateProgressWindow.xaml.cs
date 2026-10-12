@@ -13,9 +13,12 @@ namespace TMHue.App.Views;
 /// - The feed is the repository's official GitHub Releases over HTTPS (TLS validated by .NET's
 ///   default certificate chain checks); no access token ships in the client and pre-releases
 ///   are excluded.
-/// - Every downloaded package's SHA checksum is verified against the signed release manifest
-///   before it is applied; a corrupted or tampered download fails validation and is discarded,
-///   leaving the current version untouched.
+/// - Every downloaded package's SHA checksum is verified against the release feed
+///   (releases.win.json) before it is applied; a corrupted download fails validation and is
+///   discarded, leaving the current version untouched. The feed itself is not signed by the
+///   author: it comes from the same GitHub Release as the package, so the checksum proves
+///   integrity in transit, and authenticity rests on the repository plus the Authenticode
+///   signature of the release.
 /// - Nothing is executed from the download until validation passes, and failures surface here
 ///   as a simple "try again" without partial state.
 /// </summary>

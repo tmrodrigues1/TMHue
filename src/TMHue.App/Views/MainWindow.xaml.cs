@@ -3,6 +3,7 @@ using System.Windows.Input;
 using TMHue.App.ViewModels;
 using TMHue.Core.Interfaces;
 using TMHue.Core.Models;
+using TMHue.Windows.Display;
 
 namespace TMHue.App.Views;
 
@@ -11,6 +12,12 @@ public partial class MainWindow : Window
     private readonly ISettingsRepository _settingsRepository;
     private readonly AppSettings _settings;
     private bool _isExiting;
+
+    // Far beyond any real desktop; larger saved coordinates are damaged data, not a position.
+    private const double MaxSavedCoordinate = 100_000;
+
+    // Height, in DIPs, of the strip the window can be dragged by (title bar plus card margin).
+    private const double TitleAreaHeight = 56;
 
     // LocationChanged fires for every pixel of a window drag; saving settings (JSON serialize +
     // disk write, on a OneDrive-synced folder) that often is pure waste. The timer restarts on
@@ -32,6 +39,14 @@ public partial class MainWindow : Window
         _settings = settings;
 
         RestorePlacement();
+
+        // Every show, not only the first: a monitor can be unplugged while the window sits
+        // hidden in the tray. Deferred so the first show has been measured and placed.
+        IsVisibleChanged += (_, _) =>
+        {
+            if (IsVisible)
+                Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(EnsureReachable));
+        };
 
         Closing += OnClosing;
         StateChanged += (_, _) =>
@@ -79,7 +94,8 @@ public partial class MainWindow : Window
     // Only the position is persisted/restored: the window is a fixed-size, non-resizable card.
     private void RestorePlacement()
     {
-        if (_settings.WindowLeft is { } left && _settings.WindowTop is { } top)
+        if (_settings.WindowLeft is { } left && _settings.WindowTop is { } top
+            && IsPlausibleCoordinate(left) && IsPlausibleCoordinate(top))
         {
             WindowStartupLocation = WindowStartupLocation.Manual;
             Left = left;
@@ -89,6 +105,30 @@ public partial class MainWindow : Window
         {
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
         }
+    }
+
+    private static bool IsPlausibleCoordinate(double value) =>
+        double.IsFinite(value) && Math.Abs(value) <= MaxSavedCoordinate;
+
+    /// <summary>A restored position can point at a monitor that is no longer attached (or at a
+    /// resolution that shrank). When no draggable part of the window sits inside a current work
+    /// area, it is re-centered on the primary monitor instead of opening out of sight.</summary>
+    private void EnsureReachable()
+    {
+        if (!IsVisible || WindowState != WindowState.Normal || ActualWidth <= 0) return;
+        if (PresentationSource.FromVisual(this) is null) return;
+
+        var dpi = System.Windows.Media.VisualTreeHelper.GetDpi(this);
+        var origin = PointToScreen(new System.Windows.Point(0, 0));
+        var width = (int)Math.Ceiling(ActualWidth * dpi.DpiScaleX);
+        var height = (int)Math.Ceiling(ActualHeight * dpi.DpiScaleY);
+        var titleArea = new PixelBounds((int)origin.X, (int)origin.Y, width,
+            (int)Math.Ceiling(TitleAreaHeight * dpi.DpiScaleY));
+        if (WorkAreaPlacement.IsReachable(titleArea, WorkAreaPlacement.CurrentWorkAreas())) return;
+
+        var target = WorkAreaPlacement.Center(WorkAreaPlacement.PrimaryWorkArea(), width, height);
+        Left += (target.X - origin.X) / dpi.DpiScaleX;
+        Top += (target.Y - origin.Y) / dpi.DpiScaleY;
     }
 
     private void PersistPlacement()
@@ -144,7 +184,11 @@ public partial class MainWindow : Window
 
     private void OnAuthorLinkClick(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
     {
-        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true });
         e.Handled = true;
+
+        // ShellExecute opens whatever it is given; only web links may ever leave through here.
+        if (!e.Uri.IsAbsoluteUri || e.Uri.Scheme != Uri.UriSchemeHttps) return;
+
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true });
     }
 }

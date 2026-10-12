@@ -1,3 +1,4 @@
+using TMHue.App.Infrastructure;
 using Velopack;
 
 namespace TMHue.App;
@@ -9,9 +10,16 @@ namespace TMHue.App;
 /// </summary>
 public static class Program
 {
+    // O mesmo --packId usado em packaging/velopack/build-velopack.ps1 e no workflow de release.
+    private const string PackageId = "com.thiagorodrigues.TMHue";
+
     [STAThread]
     public static void Main(string[] args)
     {
+        // Antes de qualquer outra coisa: uma falha nos hooks do Velopack ou na criação da
+        // aplicação WPF também precisa chegar ao log.
+        ErrorReporter.RegisterProcessHandlers();
+
         VelopackApp.Build()
             .OnBeforeUninstallFastCallback(_ => CleanUpUserData())
             .Run();
@@ -21,33 +29,21 @@ public static class Program
         app.Run();
     }
 
-    /// <summary>O desinstalador do Velopack remove apenas a pasta de instalação
-    /// (%LocalAppData%\com.thiagorodrigues.TMHue) e os atalhos. Os dados criados pelo app —
-    /// settings.json, history.json e logs em %LocalAppData%\TMHue, além do valor "TMHue" em
-    /// HKCU\...\Run quando "iniciar com o Windows" está ativo — sobreviveriam à desinstalação
-    /// sem esta limpeza explícita. Best-effort: nunca pode falhar a desinstalação.</summary>
+    /// <summary>O desinstalador do Velopack remove o que ele mesmo criou: a pasta de instalação
+    /// (%LocalAppData%\com.thiagorodrigues.TMHue), os atalhos, a pasta temporária e a entrada em
+    /// "Aplicativos instalados". Todo o resto que o app deixa na máquina — settings.json,
+    /// history.json e logs em %LocalAppData%\TMHue, o valor "TMHue" em HKCU\...\Run, a aprovação
+    /// de inicialização, o registro do ícone da bandeja e os logs que o próprio Velopack grava
+    /// fora da pasta de instalação — sai por aqui, antes de os arquivos
+    /// serem apagados. O Velopack encerra o app em execução antes de chamar este hook.</summary>
     private static void CleanUpUserData()
     {
-        try
-        {
-            var dataFolder = TMHue.Windows.Persistence.AppPaths.RootFolder;
-            if (System.IO.Directory.Exists(dataFolder))
-                System.IO.Directory.Delete(dataFolder, recursive: true);
-        }
-        catch
-        {
-            // best-effort
-        }
+        // Este processo acabou de apagar a pasta de logs; registrar algo agora a recriaria.
+        ErrorReporter.Disable();
 
-        try
-        {
-            using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
-                @"Software\Microsoft\Windows\CurrentVersion\Run", writable: true);
-            key?.DeleteValue("TMHue", throwOnMissingValue: false);
-        }
-        catch
-        {
-            // best-effort
-        }
+        // Em ...\com.thiagorodrigues.TMHue\current\TMHue.exe, a raiz da instalação é o pai.
+        var installRoot = System.IO.Path.GetDirectoryName(
+            AppContext.BaseDirectory.TrimEnd(System.IO.Path.DirectorySeparatorChar));
+        TMHue.Windows.Persistence.UninstallCleanup.Run(installRoot, PackageId);
     }
 }

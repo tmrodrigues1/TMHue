@@ -4,6 +4,7 @@ using TMHue.Core.Interfaces;
 using TMHue.Core.Models;
 using TMHue.Core.ValueObjects;
 using TMHue.Core.Services;
+using TMHue.Windows.Display;
 using TMHue.Windows.Native;
 
 namespace TMHue.Windows.Sampling;
@@ -18,6 +19,14 @@ public sealed class ScreenColorSampler : IScreenColorSampler, IDisposable
     private ScreenSample? _sample;
     private bool _disposed;
     private readonly ScreenLineSampler _line = new();
+    private MonitorLayout? _sessionLayout;
+
+    /// <summary>Pins the monitor layout for a capture session, so the per-frame reads stop
+    /// re-enumerating the displays. Outside a session every read resolves a fresh layout.</summary>
+    public void BeginSession(MonitorLayout layout) => Volatile.Write(ref _sessionLayout, layout);
+
+    /// <summary>Unpins <paramref name="layout"/>; a no-op when a newer session already replaced it.</summary>
+    public void EndSession(MonitorLayout layout) => Interlocked.CompareExchange(ref _sessionLayout, null, layout);
 
     public bool TryReadPixel(int physicalX, int physicalY, out RgbColor color)
     {
@@ -34,15 +43,17 @@ public sealed class ScreenColorSampler : IScreenColorSampler, IDisposable
             throw new ArgumentOutOfRangeException(nameof(side));
         EnsureBuffers(side);
         _sample!.Clear();
-        var monitors = System.Windows.Forms.Screen.AllScreens;
-        if (!monitors.Any(m => m.Bounds.Contains(centerX, centerY))) return false;
+        var layout = Volatile.Read(ref _sessionLayout) ?? new MonitorLayout();
+        if (layout.At(centerX, centerY) is null) return false;
         var requested = new System.Drawing.Rectangle(centerX - side / 2, centerY - side / 2, side, side);
         try
         {
             _graphics!.Clear(System.Drawing.Color.Black);
-            foreach (var monitor in monitors)
+            foreach (var monitor in layout.Monitors)
             {
-                var clipped = System.Drawing.Rectangle.Intersect(requested, monitor.Bounds);
+                var bounds = monitor.Bounds;
+                var clipped = System.Drawing.Rectangle.Intersect(requested,
+                    new(bounds.Left, bounds.Top, bounds.Width, bounds.Height));
                 if (clipped.IsEmpty) continue;
                 var dx = clipped.Left - requested.Left;
                 var dy = clipped.Top - requested.Top;
@@ -89,7 +100,8 @@ public sealed class ScreenColorSampler : IScreenColorSampler, IDisposable
         result = default;
         if (Math.Abs(stepX) + Math.Abs(stepY) != 1 || maxSteps is < 1 or > 80 || tolerance is < 0 or > 32)
             throw new ArgumentOutOfRangeException(nameof(maxSteps));
-        return _line.TryFind(startX, startY, stepX, stepY, maxSteps, tolerance, out result);
+        return _line.TryFind(startX, startY, stepX, stepY, maxSteps, tolerance,
+            Volatile.Read(ref _sessionLayout) ?? new MonitorLayout(), out result);
     }
 
     private void EnsureBuffers(int side)

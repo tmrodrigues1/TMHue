@@ -1,9 +1,10 @@
+using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
 using System.Security.Principal;
 using System.Text;
 
-namespace TMHue.App.Infrastructure;
+namespace TMHue.Windows.Instancing;
 
 public enum SecondInstanceAction
 {
@@ -18,20 +19,40 @@ public enum SecondInstanceAction
 /// </summary>
 public sealed class SingleInstanceService : IDisposable
 {
-    private static readonly string CurrentUserSid = GetCurrentUserSid();
-    private static readonly string MutexName = $@"Local\TMHue.SingleInstance.{CurrentUserSid}";
-    private static readonly string PipeName = $"TMHue.IPC.{CurrentUserSid}";
+    // The longest valid message is an action name plus a line break; anything bigger is noise.
+    private const int MaxMessageBytes = 64;
+    private static readonly TimeSpan MessageReadTimeout = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan InitialRetryDelay = TimeSpan.FromMilliseconds(250);
+    private static readonly TimeSpan MaxRetryDelay = TimeSpan.FromSeconds(30);
 
+    private static readonly string CurrentUserSid = GetCurrentUserSid();
+
+    private readonly string _mutexName;
     private Mutex? _mutex;
     private CancellationTokenSource? _listenerCts;
+    private int _listenerAttempts;
     private int _disposed;
 
+    public SingleInstanceService() : this(string.Empty) { }
+
+    /// <summary>Isolated names for tests, so they never collide with a running TMHue.</summary>
+    internal SingleInstanceService(string nameSuffix)
+    {
+        _mutexName = $@"Local\TMHue.SingleInstance.{CurrentUserSid}{nameSuffix}";
+        PipeName = BuildPipeName(nameSuffix);
+    }
+
     public event EventHandler<SecondInstanceAction>? SecondInstanceRequested;
+
+    internal string PipeName { get; }
+
+    /// <summary>How many times the listener tried to create its pipe server.</summary>
+    internal int ListenerAttempts => Volatile.Read(ref _listenerAttempts);
 
     /// <summary>Attempts to acquire ownership. Returns false when another instance already owns it.</summary>
     public bool TryAcquire()
     {
-        _mutex = new Mutex(initiallyOwned: true, MutexName, out var createdNew);
+        _mutex = new Mutex(initiallyOwned: true, _mutexName, out var createdNew);
         if (createdNew)
         {
             StartListening();
@@ -43,19 +64,30 @@ public sealed class SingleInstanceService : IDisposable
         return false;
     }
 
-    public static void NotifyRunningInstance(SecondInstanceAction action)
+    public static void NotifyRunningInstance(SecondInstanceAction action) =>
+        NotifyRunningInstance(action, string.Empty);
+
+    internal static void NotifyRunningInstance(SecondInstanceAction action, string nameSuffix)
     {
         try
         {
-            using var client = new NamedPipeClientStream(".", PipeName, PipeDirection.Out);
+            using var client = new NamedPipeClientStream(".", BuildPipeName(nameSuffix), PipeDirection.Out,
+                PipeOptions.CurrentUserOnly);
             client.Connect(500);
-            using var writer = new StreamWriter(client, Encoding.UTF8) { AutoFlush = true };
-            writer.WriteLine(action.ToString());
+            client.Write(Encoding.ASCII.GetBytes(action + "\n"));
         }
         catch
         {
             // The first instance may be shutting down; nothing meaningful to recover here.
         }
+    }
+
+    // The pipe namespace is machine-wide while the Mutex is per session ("Local\"); the
+    // session id keeps the same user's sessions from fighting over one pipe.
+    private static string BuildPipeName(string nameSuffix)
+    {
+        using var process = Process.GetCurrentProcess();
+        return $"TMHue.IPC.{CurrentUserSid}.{process.SessionId}{nameSuffix}";
     }
 
     private static string GetCurrentUserSid()
@@ -69,32 +101,68 @@ public sealed class SingleInstanceService : IDisposable
     {
         _listenerCts = new CancellationTokenSource();
         var token = _listenerCts.Token;
+        Task.Run(() => ListenAsync(token), token);
+    }
 
-        Task.Run(async () =>
+    private async Task ListenAsync(CancellationToken token)
+    {
+        var retryDelay = InitialRetryDelay;
+        while (!token.IsCancellationRequested)
         {
-            while (!token.IsCancellationRequested)
+            try
             {
+                Interlocked.Increment(ref _listenerAttempts);
+                await using var server = new NamedPipeServerStream(PipeName, PipeDirection.In, 1,
+                    PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
+                await server.WaitForConnectionAsync(token).ConfigureAwait(false);
+                retryDelay = InitialRetryDelay;
+
+                if (await ReadActionAsync(server, token).ConfigureAwait(false) is { } action)
+                    SecondInstanceRequested?.Invoke(this, action);
+            }
+            catch (OperationCanceledException) when (token.IsCancellationRequested)
+            {
+                break;
+            }
+            catch
+            {
+                // Keep the listener alive across pipe errors, but never spin: when another
+                // process holds the pipe name, creating the server fails immediately every time.
                 try
                 {
-                    await using var server = new NamedPipeServerStream(PipeName, PipeDirection.In, 1,
-                        PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
-                    await server.WaitForConnectionAsync(token);
-
-                    using var reader = new StreamReader(server, Encoding.UTF8);
-                    var line = await reader.ReadLineAsync(token);
-                    if (Enum.TryParse<SecondInstanceAction>(line, out var action))
-                        SecondInstanceRequested?.Invoke(this, action);
+                    await Task.Delay(retryDelay, token).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {
                     break;
                 }
-                catch
-                {
-                    // Keep the listener alive across transient pipe errors.
-                }
+
+                retryDelay = retryDelay * 2 < MaxRetryDelay ? retryDelay * 2 : MaxRetryDelay;
             }
-        }, token);
+        }
+    }
+
+    /// <summary>Reads one short line. A client that stalls or floods is dropped by the timeout
+    /// and the size cap instead of holding the listener or growing a buffer.</summary>
+    private static async Task<SecondInstanceAction?> ReadActionAsync(Stream stream, CancellationToken token)
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token);
+        timeout.CancelAfter(MessageReadTimeout);
+
+        var buffer = new byte[MaxMessageBytes];
+        var length = 0;
+        while (length < buffer.Length)
+        {
+            var read = await stream.ReadAsync(buffer.AsMemory(length), timeout.Token).ConfigureAwait(false);
+            if (read == 0) break;
+            length += read;
+            if (Array.IndexOf(buffer, (byte)'\n', 0, length) >= 0) break;
+        }
+
+        var line = Encoding.UTF8.GetString(buffer, 0, length).Split('\n')[0].Trim('﻿', '\r', ' ');
+        return Enum.TryParse<SecondInstanceAction>(line, out var action) && Enum.IsDefined(action)
+            ? action
+            : null;
     }
 
     public void Dispose()

@@ -1,10 +1,11 @@
 # Release do TMHue: dispara em tags v* (ex.: v1.1.0).
-# Publica o app, empacota com Velopack (Setup.exe + full + delta + releases.win.json) e
-# anexa tudo à GitHub Release. O feed releases.win.json é o que o app instalado consulta
-# para descobrir novas versões (GithubSource sem token — releases públicas).
+# Testa, publica o app, empacota com Velopack (Setup.exe + full + delta + releases.win.json) e
+# anexa tudo à GitHub Release, junto com SHA256SUMS.txt e as notas extraídas do CHANGELOG.md.
+# O feed releases.win.json é o que o app instalado consulta para descobrir novas versões
+# (GithubSource sem token — releases públicas).
 #
 # Assinatura Authenticode é opcional. Sem os segredos CODESIGN_PFX_BASE64 e
-# CODESIGN_PFX_PASSWORD, a release é publicada sem assinatura.
+# CODESIGN_PFX_PASSWORD, a release é publicada sem assinatura (com um aviso no log).
 name: release
 
 on:
@@ -18,26 +19,44 @@ permissions:
 jobs:
   release:
     runs-on: windows-latest
+    # Configure revisores obrigatórios neste environment e guarde nele os segredos de
+    # assinatura: assim nenhuma tag publica (nem assina) sem aprovação.
+    environment: release
     env:
       PACK_ID: com.thiagorodrigues.TMHue
       REPO_URL: https://github.com/tmrodrigues1/TMHue
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
+      # O nome da tag é dado controlado por quem cria a tag: chega por variável de ambiente
+      # (nunca interpolado no script) e só segue adiante depois de validado.
       - name: Extrair versão da tag
         id: version
         shell: pwsh
+        env:
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          $version = '${{ github.ref_name }}'.TrimStart('v')
-          if ($version -notmatch '^\d+\.\d+\.\d+$') { throw "Tag inválida: use vX.Y.Z (recebi '${{ github.ref_name }}')." }
-          "version=$version" >> $env:GITHUB_OUTPUT
+          if ($env:REF_NAME -notmatch '^v(\d+\.\d+\.\d+)$') { throw 'Tag inválida: use vX.Y.Z.' }
+          "version=$($Matches[1])" >> $env:GITHUB_OUTPUT
 
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
-
-      - name: Instalar CLI do Velopack
-        run: dotnet tool install -g vpk
+      # Falha cedo, antes de compilar, se a versão não tiver seção no CHANGELOG.md.
+      - name: Extrair notas da release do CHANGELOG
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          $heading = '## [' + $env:VERSION + ']'
+          $body = @()
+          $inSection = $false
+          foreach ($line in Get-Content CHANGELOG.md -Encoding utf8) {
+            if ($inSection -and $line.StartsWith('## [')) { break }
+            if ($inSection) { $body += $line }
+            elseif ($line.StartsWith($heading)) { $inSection = $true }
+          }
+          if (-not $inSection) { throw "CHANGELOG.md não tem a seção $heading." }
+          $notes = ($body -join "`n").Trim()
+          if (-not $notes) { throw "A seção $heading do CHANGELOG.md está vazia." }
+          Set-Content -Path (Join-Path $env:RUNNER_TEMP 'release-notes.md') -Value $notes -Encoding utf8
 
       # Importa o PFX no repositório de certificados do usuário do runner e assina por
       # thumbprint (/sha1): a senha nunca aparece na linha de comando do vpk/signtool,
@@ -65,14 +84,43 @@ jobs:
           "signed=true" >> $env:GITHUB_OUTPUT
           "thumbprint=$($cert.Thumbprint)" >> $env:GITHUB_OUTPUT
 
-      - name: Publicar TMHue
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+        with:
+          dotnet-version: '10.0.x'
+
+      # Modo travado: falha se o grafo de pacotes divergir dos packages.lock.json versionados.
+      - name: Restaurar pacotes
         shell: pwsh
         run: |
-          $v = '${{ steps.version.outputs.version }}'
+          dotnet restore TMHue.sln --locked-mode
+          if ($LASTEXITCODE -ne 0) { throw 'Falha no dotnet restore (modo travado).' }
+
+      - name: Testar
+        shell: pwsh
+        run: |
+          dotnet test TMHue.sln -c Release --no-restore
+          if ($LASTEXITCODE -ne 0) { throw 'Testes falharam; release cancelada.' }
+
+      - name: Publicar TMHue
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
           dotnet publish src/TMHue.App/TMHue.App.csproj -c Release -r win-x64 --self-contained true `
-            -p:PublishSingleFile=false -p:Version="$v.0" -p:InformationalVersion=$v `
-            -o artifacts/publish
+            -p:PublishSingleFile=false -p:Version="$($env:VERSION).0" -p:InformationalVersion=$env:VERSION `
+            -p:RestoreLockedMode=true -o artifacts/publish
           if ($LASTEXITCODE -ne 0) { throw 'Falha no dotnet publish.' }
+
+      # A CLI precisa ser da mesma versão da biblioteca Velopack embutida no app; a versão é
+      # lida do .csproj para as duas nunca divergirem.
+      - name: Instalar CLI do Velopack
+        shell: pwsh
+        run: |
+          [xml]$project = Get-Content src/TMHue.App/TMHue.App.csproj
+          $vpkVersion = ($project.Project.ItemGroup.PackageReference | Where-Object { $_.Include -eq 'Velopack' }).Version
+          if (-not $vpkVersion) { throw 'Versão do pacote Velopack não encontrada em TMHue.App.csproj.' }
+          dotnet tool install -g vpk --version $vpkVersion
+          if ($LASTEXITCODE -ne 0) { throw "Falha ao instalar vpk $vpkVersion." }
 
       # Baixa a release anterior do GitHub para o vpk gerar o pacote delta.
       - name: Baixar release anterior (delta)
@@ -82,12 +130,15 @@ jobs:
 
       - name: Empacotar com Velopack
         shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          SIGNED: ${{ steps.signing.outputs.signed }}
+          THUMBPRINT: ${{ steps.signing.outputs.thumbprint }}
         run: |
-          $v = '${{ steps.version.outputs.version }}'
           $vpkArgs = @(
             'pack',
             '--packId', $env:PACK_ID,
-            '--packVersion', $v,
+            '--packVersion', $env:VERSION,
             '--packDir', 'artifacts/publish',
             '--mainExe', 'TMHue.exe',
             '--packTitle', 'TMHue',
@@ -98,8 +149,8 @@ jobs:
             '--outputDir', 'artifacts/releases',
             '--shortcuts', 'Desktop,StartMenuRoot'
           )
-          if ('${{ steps.signing.outputs.signed }}' -eq 'true') {
-            $vpkArgs += @('--signParams', '/sha1 ${{ steps.signing.outputs.thumbprint }} /fd sha256 /tr http://timestamp.digicert.com /td sha256')
+          if ($env:SIGNED -eq 'true') {
+            $vpkArgs += @('--signParams', "/sha1 $($env:THUMBPRINT) /fd sha256 /tr http://timestamp.digicert.com /td sha256")
           }
           vpk @vpkArgs
           if ($LASTEXITCODE -ne 0) { throw 'Falha no vpk pack.' }
@@ -110,27 +161,40 @@ jobs:
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          $v = '${{ steps.version.outputs.version }}'
           vpk upload github --repoUrl $env:REPO_URL --token $env:GITHUB_TOKEN `
             --outputDir artifacts/releases `
-            --releaseName "TMHue $v" --tag 'v${{ steps.version.outputs.version }}' --publish
+            --releaseName "TMHue $($env:VERSION)" --tag "v$($env:VERSION)" --publish
           if ($LASTEXITCODE -ne 0) { throw 'Falha no vpk upload.' }
+
+      # docs/security.md pede ao usuário que confira o SHA-256 do que baixou. A lista é gerada
+      # a partir dos arquivos realmente anexados à release, no formato do sha256sum.
+      - name: Publicar SHA256SUMS.txt
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          $tag = "v$($env:VERSION)"
+          $assets = gh release view $tag --repo $env:REPO_URL --json assets --jq '.assets[].name'
+          if ($LASTEXITCODE -ne 0) { throw 'Falha ao listar os arquivos da release.' }
+          $sums = foreach ($name in $assets) {
+            $file = Join-Path 'artifacts/releases' $name
+            if (-not (Test-Path $file)) { throw "Arquivo da release não encontrado localmente: $name" }
+            '{0}  {1}' -f (Get-FileHash $file -Algorithm SHA256).Hash.ToLowerInvariant(), $name
+          }
+          $sumsFile = Join-Path $env:RUNNER_TEMP 'SHA256SUMS.txt'
+          Set-Content -Path $sumsFile -Value $sums -Encoding utf8
+          gh release upload $tag $sumsFile --repo $env:REPO_URL --clobber
+          if ($LASTEXITCODE -ne 0) { throw 'Falha ao anexar SHA256SUMS.txt.' }
 
       - name: Adicionar notas da release
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          $v = '${{ steps.version.outputs.version }}'
-          $notes = @'
-          ## Correções
-
-          - Corrigida a abertura da janela principal em instalações do Windows sem as fontes opcionais Segoe UI Variable e Cascadia Mono.
-
-          - Quando a janela não puder ser renderizada, o app agora exibe um aviso e registra o erro, em vez de permanecer silencioso na bandeja.
-
-          - Corrigida a exibição do tamanho instalado em Configurações > Aplicativos.
-          '@
-          gh release edit "v$v" --repo $env:REPO_URL --notes $notes
+          gh release edit "v$($env:VERSION)" --repo $env:REPO_URL `
+            --notes-file (Join-Path $env:RUNNER_TEMP 'release-notes.md')
           if ($LASTEXITCODE -ne 0) { throw 'Falha ao adicionar as notas da release.' }

@@ -22,14 +22,28 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="Expander">
                         <StackPanel>
+                            <!-- The header sits flush on the card: no hover wash and no default dotted focus
+                                 rectangle, both of which read as a stray box inside the card. Hover and
+                                 keyboard focus are signalled by the chevron and a rounded accent ring. -->
                             <ToggleButton IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
                                           Foreground="{TemplateBinding Foreground}"
                                           Content="{TemplateBinding Header}" Cursor="Hand"
                                           HorizontalContentAlignment="Stretch">
+                                <ToggleButton.FocusVisualStyle>
+                                    <Style>
+                                        <Setter Property="Control.Template">
+                                            <Setter.Value>
+                                                <ControlTemplate>
+                                                    <Border Margin="-7,-1" CornerRadius="8" SnapsToDevicePixels="True"
+                                                            BorderBrush="{DynamicResource Brush.Accent}" BorderThickness="1" />
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ToggleButton.FocusVisualStyle>
                                 <ToggleButton.Template>
                                     <ControlTemplate TargetType="ToggleButton">
-                                        <Border x:Name="HeaderBorder" Background="Transparent" CornerRadius="8"
-                                                BorderBrush="Transparent" BorderThickness="1" Padding="6,5">
+                                        <Border Background="Transparent" Padding="0,5">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="*" />
@@ -46,7 +60,7 @@
                                                 <Setter TargetName="Chevron" Property="Text" Value="&#xE70E;" />
                                             </Trigger>
                                             <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter TargetName="HeaderBorder" Property="Background" Value="{DynamicResource Brush.HoverFill}" />
+                                                <Setter TargetName="Chevron" Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
                                             </Trigger>
                                         </ControlTemplate.Triggers>
                                     </ControlTemplate>
@@ -116,7 +130,8 @@
                     <CheckBox Content="{DynamicResource L.Settings.StartWithWindows}" IsChecked="{Binding StartWithWindows}" Margin="0,0,0,10" />
                     <CheckBox Content="{DynamicResource L.Settings.CloseToTray}" IsChecked="{Binding CloseToTray}" Margin="0,0,0,10" />
                     <CheckBox Content="{DynamicResource L.Settings.ShowCaptureNotification}" IsChecked="{Binding ShowCaptureNotification}" Margin="0,0,0,10" />
-                    <CheckBox Content="{DynamicResource L.Settings.ShowMagnifier}" IsChecked="{Binding ShowMagnifier}" />
+                    <CheckBox Content="{DynamicResource L.Settings.ShowMagnifier}" IsChecked="{Binding ShowMagnifier}" Margin="0,0,0,10" />
+                    <CheckBox Content="{DynamicResource L.Settings.AutoCheckForUpdates}" IsChecked="{Binding AutoCheckForUpdates}" />
                 </StackPanel>
             </Border>
 

@@ -78,6 +78,7 @@
     <sys:String x:Key="L.Settings.CopyTip4">Durante a captura, pressione a tecla correspondente para usar outro formato apenas naquela cópia.</sys:String>
     <sys:String x:Key="L.Settings.Hotkeys">Atalhos globais</sys:String>
     <sys:String x:Key="L.Settings.Updates">Atualizações</sys:String>
+    <sys:String x:Key="L.Settings.AutoCheckForUpdates">Verificar atualizações automaticamente</sys:String>
     <sys:String x:Key="L.Settings.Check">Verificar</sys:String>
     <sys:String x:Key="L.Settings.NotNow">Agora não</sys:String>
     <sys:String x:Key="L.Settings.Update">Atualizar</sys:String>
@@ -123,6 +124,8 @@
     <sys:String x:Key="L.Palette.EmptyHint">As cores dominantes aparecem aqui após carregar uma imagem ou capturar a tela.</sys:String>
     <sys:String x:Key="L.Palette.ReadError">Não foi possível ler a imagem. Use PNG, JPG, BMP, GIF ou WEBP.</sys:String>
     <sys:String x:Key="L.Palette.NoColors">Nenhuma cor pôde ser extraída dessa imagem.</sys:String>
+    <sys:String x:Key="L.Palette.Loading">Carregando imagem…</sys:String>
+    <sys:String x:Key="L.Palette.TooLarge">A imagem é grande demais. Use arquivos de até 50 MB e 100 megapixels.</sys:String>
 
     <!-- Contraste (WCAG) -->
     <sys:String x:Key="L.Contrast.WindowTitle">Contraste (WCAG) — TMHue</sys:String>

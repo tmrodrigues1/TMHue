@@ -131,6 +131,13 @@
 
                     <Image Source="{Binding PreviewImage}" Stretch="Uniform" Margin="8"
                            RenderOptions.BitmapScalingMode="HighQuality" />
+
+                    <!-- Covers the placeholder (or the previous image) while a dropped file decodes. -->
+                    <Border Background="{DynamicResource Brush.SurfaceElevated}"
+                            Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TextBlock Text="{DynamicResource L.Palette.Loading}" Style="{StaticResource Text.Body}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
                 </Grid>
             </Border>
 

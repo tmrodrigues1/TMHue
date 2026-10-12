@@ -9,8 +9,8 @@ namespace TMHue.Windows.Startup;
 /// </summary>
 public sealed class StartupService : IStartupService
 {
-    private const string RunKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
-    private const string ValueName = "TMHue";
+    internal const string RunKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
+    internal const string ValueName = "TMHue";
 
     private readonly string _executablePath;
 

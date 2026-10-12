@@ -49,6 +49,54 @@ internal static partial class NativeMethods
 
     public const uint SRCCOPY = 0x00CC0020;
 
+    // --- Screen snapshot straight into shared memory (frozen picking) ---
+    [StructLayout(LayoutKind.Sequential)]
+    public struct BITMAPINFOHEADER
+    {
+        public uint biSize;
+        public int biWidth;
+        public int biHeight;
+        public ushort biPlanes;
+        public ushort biBitCount;
+        public uint biCompression;
+        public uint biSizeImage;
+        public int biXPelsPerMeter;
+        public int biYPelsPerMeter;
+        public uint biClrUsed;
+        public uint biClrImportant;
+    }
+
+    public const uint BI_RGB = 0;
+    public const uint DIB_RGB_COLORS = 0;
+
+    [LibraryImport("gdi32.dll")]
+    public static partial nint CreateCompatibleDC(nint hdc);
+
+    [LibraryImport("gdi32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool DeleteDC(nint hdc);
+
+    [LibraryImport("gdi32.dll")]
+    public static partial nint SelectObject(nint hdc, nint gdiObject);
+
+    [LibraryImport("gdi32.dll", SetLastError = true)]
+    public static partial nint CreateDIBSection(
+        nint hdc, in BITMAPINFOHEADER bitmapInfo, uint usage, out nint bits, nint section, uint offset);
+
+    [LibraryImport("gdi32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool BitBlt(
+        nint hdcDest, int xDest, int yDest, int width, int height,
+        nint hdcSource, int xSource, int ySource, uint rasterOperation);
+
+    // --- Working set trimming (tray-resident idle state) ---
+    [LibraryImport("kernel32.dll")]
+    public static partial nint GetCurrentProcess();
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool SetProcessWorkingSetSize(nint process, nint minimumSize, nint maximumSize);
+
     public static (byte R, byte G, byte B) ColorRefToRgb(uint colorRef) =>
         ((byte)(colorRef & 0x000000FF), (byte)((colorRef & 0x0000FF00) >> 8), (byte)((colorRef & 0x00FF0000) >> 16));
 

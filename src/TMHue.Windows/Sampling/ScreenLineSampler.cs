@@ -14,14 +14,14 @@ internal sealed class ScreenLineSampler : IDisposable
     private System.Drawing.Graphics? _graphics;
     private readonly byte[] _pixels = new byte[81 * 4];
 
-    public bool TryFind(int x, int y, int dx, int dy, int steps, int tolerance, out (int X, int Y) result)
+    public bool TryFind(int x, int y, int dx, int dy, int steps, int tolerance, MonitorLayout layout,
+        out (int X, int Y) result)
     {
         result = default;
         var width = dx == 0 ? 1 : steps + 1;
         var height = dy == 0 ? 1 : steps + 1;
         var left = Math.Min(x, x + dx * steps); var top = Math.Min(y, y + dy * steps);
         var region = new System.Drawing.Rectangle(left, top, width, height);
-        var layout = new MonitorLayout();
         if (layout.At(x, y) is null) return false;
         EnsureBuffers(width, height);
         try

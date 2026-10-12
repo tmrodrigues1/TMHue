@@ -26,6 +26,7 @@ public sealed class MainViewModel : ViewModelBase
     private RgbColor _currentColor = new(0x2F, 0x80, 0xED);
     private ColorFormatEntry _primaryFormat = new(CopyFormat.Hex, "HEX", "#2F80ED", true);
     private System.Windows.Media.Brush _currentBrush = new SolidColorBrush(Color.FromRgb(0x2F, 0x80, 0xED));
+    private Color _glowColor = Color.FromRgb(0x2F, 0x80, 0xED);
 
     // Set while a capture is in progress and the user presses 1/2/3 to switch the format for that
     // capture only (ColorPickerCoordinator.ActiveFormatChanged); makes the main window's own
@@ -50,6 +51,7 @@ public sealed class MainViewModel : ViewModelBase
         _coordinator.Captured += OnCaptured;
         _coordinator.HoverColorChanged += OnHoverColorChanged;
         _coordinator.ActiveFormatChanged += OnActiveFormatChanged;
+        _coordinator.CaptureFinished += (_, _) => GlowColor = ToMediaColor(_currentColor);
         _history.Changed += (_, _) => RefreshHistory();
 
         CaptureCommand = new RelayCommand(() =>
@@ -146,6 +148,16 @@ public sealed class MainViewModel : ViewModelBase
         private set => SetField(ref _currentBrush, value);
     }
 
+    /// <summary>Color of the glow the swatch casts. Kept apart from <see cref="CurrentBrush"/>
+    /// because the glow is a blurred effect on a per-pixel-transparent window: following the
+    /// hovered color would re-render it up to 30 times per second. It only catches up when a
+    /// capture ends.</summary>
+    public Color GlowColor
+    {
+        get => _glowColor;
+        private set => SetField(ref _glowColor, value);
+    }
+
     public string HotkeyDisplay => _settingsAccessor().Hotkey.ToString();
     public string OpenAppHotkeyDisplay => _settingsAccessor().OpenAppHotkey.ToString();
     public string ContrastCheckerHotkeyDisplay => _settingsAccessor().ContrastCheckerHotkey.ToString();
@@ -180,7 +192,7 @@ public sealed class MainViewModel : ViewModelBase
             var window = System.Windows.Application.Current.MainWindow;
             if (window is null || !window.IsVisible) return;
 
-            SetCurrent(color);
+            ShowColor(color, updateGlow: false);
         });
     }
 
@@ -210,15 +222,18 @@ public sealed class MainViewModel : ViewModelBase
     /// <summary>Recomputes all four format readouts for the given color against the current
     /// default format setting. Also called after the settings window closes, so switching the
     /// default format is reflected immediately without needing a new capture/hover.</summary>
-    public void SetCurrent(RgbColor color)
+    public void SetCurrent(RgbColor color) => ShowColor(color, updateGlow: true);
+
+    private void ShowColor(RgbColor color, bool updateGlow)
     {
         _currentColor = color;
 
         // Frozen: an unfrozen brush keeps change-notification plumbing and thread affinity alive
         // for no benefit — this one is replaced, never mutated.
-        var brush = new SolidColorBrush(Color.FromRgb(color.Red, color.Green, color.Blue));
+        var brush = new SolidColorBrush(ToMediaColor(color));
         brush.Freeze();
         CurrentBrush = brush;
+        if (updateGlow) GlowColor = ToMediaColor(color);
 
         var defaultFormat = _captureFormatOverride ?? _settingsAccessor().CopyFormat;
         PrimaryFormat = BuildEntry(defaultFormat, color, isDefault: true);
@@ -248,6 +263,8 @@ public sealed class MainViewModel : ViewModelBase
         while (SecondaryFormats.Count > index)
             SecondaryFormats.RemoveAt(SecondaryFormats.Count - 1);
     }
+
+    private static Color ToMediaColor(RgbColor color) => Color.FromRgb(color.Red, color.Green, color.Blue);
 
     private static ColorFormatEntry BuildEntry(CopyFormat format, RgbColor color, bool isDefault) =>
         new(format, format.ToLabel(), color.Format(format), isDefault);

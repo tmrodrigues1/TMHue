@@ -18,6 +18,7 @@ public sealed class SettingsRepository : ISettingsRepository
     };
 
     private readonly string _filePath;
+    private readonly object _saveGate = new();
 
     public SettingsRepository(string filePath)
     {
@@ -33,9 +34,7 @@ public sealed class SettingsRepository : ISettingsRepository
         {
             var json = ReadFileWithSizeLimit();
             var settings = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? AppSettings.CreateDefault();
-            if (settings.SampleAreaSize is not (1 or 5 or 11)) settings.SampleAreaSize = 1;
-            settings.ColorChangeTolerance = Math.Clamp(settings.ColorChangeTolerance, 0, 32);
-            if (!Enum.IsDefined(settings.ColorOutput)) settings.ColorOutput = CaptureColorOutput.Rendered;
+            settings.Normalize();
             return settings;
         }
         catch (Exception)
@@ -51,8 +50,11 @@ public sealed class SettingsRepository : ISettingsRepository
         if (!string.IsNullOrEmpty(directory))
             Directory.CreateDirectory(directory);
 
-        var json = JsonSerializer.Serialize(settings, JsonOptions);
-        AtomicFileWriter.Write(_filePath, json);
+        lock (_saveGate)
+        {
+            var json = JsonSerializer.Serialize(settings, JsonOptions);
+            AtomicFileWriter.Write(_filePath, json);
+        }
     }
 
     private void BackupCorruptedFile()

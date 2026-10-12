@@ -9,12 +9,21 @@ public static class AtomicFileWriter
 {
     public static void Write(string filePath, string contents)
     {
-        var tempPath = filePath + ".tmp";
-        File.WriteAllText(tempPath, contents);
+        // Nome único: duas gravações simultâneas do mesmo destino não disputam o temporário.
+        var tempPath = $"{filePath}.{Guid.NewGuid():N}.tmp";
+        try
+        {
+            File.WriteAllText(tempPath, contents);
 
-        if (File.Exists(filePath))
-            File.Replace(tempPath, filePath, destinationBackupFileName: null);
-        else
-            File.Move(tempPath, filePath);
+            if (File.Exists(filePath))
+                File.Replace(tempPath, filePath, destinationBackupFileName: null);
+            else
+                File.Move(tempPath, filePath);
+        }
+        finally
+        {
+            // Só existe aqui se a gravação ou a promoção falhou.
+            File.Delete(tempPath);
+        }
     }
 }

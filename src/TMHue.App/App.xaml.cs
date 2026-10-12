@@ -1,5 +1,4 @@
 using System.IO;
-using System.Text;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using TMHue.App.Infrastructure;
@@ -11,6 +10,8 @@ using TMHue.Core.Services;
 using TMHue.Windows.Clipboard;
 using TMHue.Windows.Cursor;
 using TMHue.Windows.Hotkeys;
+using TMHue.Windows.Instancing;
+using TMHue.Windows.Memory;
 using TMHue.Windows.Notifications;
 using TMHue.Windows.Persistence;
 using TMHue.Windows.Sampling;
@@ -20,8 +21,10 @@ namespace TMHue.App;
 
 public partial class App : System.Windows.Application
 {
-    private const long MaxErrorLogBytes = 1024 * 1024;
-    private const int MaxErrorLogEntryCharacters = 16 * 1024;
+    // Uma exceção isolada da UI é registrada e tolerada; dez em dez segundos indicam uma falha
+    // que se repete a cada frame, e continuar só queimaria CPU e disco.
+    private readonly FailureBurstDetector _unhandledFailures = new(threshold: 10, TimeSpan.FromSeconds(10));
+    private bool _failureShutdownStarted;
 
     private ServiceProvider? _services;
     private SingleInstanceService? _singleInstance;
@@ -34,20 +37,41 @@ public partial class App : System.Windows.Application
     {
         base.OnStartup(e);
 
+        try
+        {
+            Start(e);
+        }
+        catch (Exception exception)
+        {
+            FailStartup(exception);
+        }
+    }
+
+    /// <summary>Uma falha no meio da inicialização deixaria o processo vivo sem janela nem ícone
+    /// na bandeja, segurando a instância única — o usuário veria apenas "o app não abre". Em vez
+    /// disso: registra a causa, avisa onde está o log e encerra.</summary>
+    private void FailStartup(Exception exception)
+    {
+        ErrorReporter.Report("Inicialização; o app não pôde iniciar e foi encerrado", exception);
+        ErrorReporter.Flush();
+        // MessageBox do WinForms pelo mesmo motivo de ShowMainWindow: não depende do WPF.
+        System.Windows.Forms.MessageBox.Show(
+            $"O TMHue não pôde iniciar.\n\n{exception.Message}\n\nDetalhes em: {ErrorReporter.LogPath}",
+            "TMHue",
+            System.Windows.Forms.MessageBoxButtons.OK,
+            System.Windows.Forms.MessageBoxIcon.Error);
+        Shutdown(1);
+    }
+
+    private void Start(StartupEventArgs e)
+    {
         // A tray-resident utility must never die silently on a UI exception (e.g. a bad resource
         // while rendering a toast). Log and keep running.
         DispatcherUnhandledException += (_, args) =>
         {
-            try
-            {
-                Directory.CreateDirectory(AppPaths.LogsFolder);
-                AppendErrorLog(args.Exception);
-            }
-            catch
-            {
-                // logging must never crash the handler
-            }
+            ErrorReporter.Report("Interface (thread da UI); o app continuou em execução", args.Exception);
             args.Handled = true;
+            RegisterUnhandledFailure();
         };
 
         // O ícone da bandeja é um NotifyIcon do WinForms; exceções disparadas pelos seus eventos
@@ -58,15 +82,8 @@ public partial class App : System.Windows.Application
             System.Windows.Forms.UnhandledExceptionMode.CatchException);
         System.Windows.Forms.Application.ThreadException += (_, args) =>
         {
-            try
-            {
-                Directory.CreateDirectory(AppPaths.LogsFolder);
-                AppendErrorLog(args.Exception);
-            }
-            catch
-            {
-                // logging must never crash the handler
-            }
+            ErrorReporter.Report("Ícone da bandeja (WinForms); o app continuou em execução", args.Exception);
+            RegisterUnhandledFailure();
         };
 
         var startMinimized = e.Args.Contains("--minimized");
@@ -84,8 +101,8 @@ public partial class App : System.Windows.Application
 
         _singleInstance.SecondInstanceRequested += OnSecondInstanceRequested;
 
-        MigrateLegacyDataFolder();
         Directory.CreateDirectory(AppPaths.RootFolder);
+        ErrorReporter.BeginSession();
 
         var services = new ServiceCollection();
         ConfigureServices(services);
@@ -103,6 +120,8 @@ public partial class App : System.Windows.Application
         var history = _services.GetRequiredService<IColorHistoryService>();
         history.Load();
 
+        _services.GetRequiredService<ColorPickerCoordinator>().CaptureFinished += (_, _) => ScheduleMemoryTrim();
+
         _mainWindow = CreateMainWindow();
 
         SetupTray();
@@ -110,6 +129,8 @@ public partial class App : System.Windows.Application
 
         if (!startMinimized)
             ShowMainWindow();
+        else
+            ScheduleMemoryTrim(); // direto para a bandeja: nada mais vai liberar o pico do startup
 
         SetupUpdates();
         UpdateUninstallEstimatedSize();
@@ -117,10 +138,15 @@ public partial class App : System.Windows.Application
 
     /// <summary>O Velopack registra a entrada de desinstalação sem o valor "EstimatedSize", e é
     /// exclusivamente desse valor que Configurações > Aplicativos tira o tamanho exibido — sem
-    /// ele, o app aparece sem tamanho. Calculado e gravado em segundo plano a cada início, o que
-    /// também o mantém correto após atualizações.</summary>
-    private static void UpdateUninstallEstimatedSize()
+    /// ele, o app aparece sem tamanho. Calculado e gravado em segundo plano uma vez por versão
+    /// instalada: percorrer a pasta de instalação inteira a cada início seria desperdício, e a
+    /// versão muda justamente quando uma atualização altera o tamanho.</summary>
+    private void UpdateUninstallEstimatedSize()
     {
+        var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString();
+        if (version is null || _settings.UninstallSizeVersion == version)
+            return;
+
         ThreadPool.QueueUserWorkItem(_ =>
         {
             try
@@ -152,6 +178,13 @@ public partial class App : System.Windows.Application
                         // EstimatedSize é em KB, DWORD.
                         key!.SetValue("EstimatedSize", (int)(totalBytes / 1024),
                             Microsoft.Win32.RegistryValueKind.DWord);
+
+                        // AppSettings pertence à thread da UI.
+                        Dispatcher.BeginInvoke(new Action(() =>
+                        {
+                            _settings.UninstallSizeVersion = version;
+                            _services?.GetRequiredService<ISettingsRepository>().Save(_settings);
+                        }));
                         break;
                     }
                 }
@@ -175,25 +208,6 @@ public partial class App : System.Windows.Application
             toast.Show();
         };
         updateService.CheckInBackground();
-    }
-
-    /// <summary>The app was renamed from "TMHue" to "TMHue"; the settings/history folder
-    /// moved with it. A one-time move preserves existing users' data instead of resetting them
-    /// to defaults on first launch after the update.</summary>
-    private static void MigrateLegacyDataFolder()
-    {
-        try
-        {
-            var legacyFolder = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TMHue");
-
-            if (Directory.Exists(legacyFolder) && !Directory.Exists(AppPaths.RootFolder))
-                Directory.Move(legacyFolder, AppPaths.RootFolder);
-        }
-        catch
-        {
-            // Best-effort; must never block startup. Worst case, settings reset to defaults.
-        }
     }
 
     /// <summary>The Run-key check compares an exact string, so a moved/updated executable or a
@@ -225,11 +239,12 @@ public partial class App : System.Windows.Application
         services.AddSingleton<IGlobalHotkeyService, GlobalHotkeyService>();
 
         services.AddSingleton<INotificationService, ToastNotificationService>();
+        services.AddSingleton<MemoryTrimmer>();
 
         services.AddSingleton(sp => new UpdateService(
             sp.GetRequiredService<AppSettings>(),
             sp.GetRequiredService<ISettingsRepository>(),
-            LogErrorSafe));
+            exception => ErrorReporter.Report("Atualização; a versão atual foi mantida", exception)));
 
         services.AddSingleton(sp => new ColorPickerCoordinator(
             sp.GetRequiredService<IScreenColorSampler>(),
@@ -371,6 +386,10 @@ public partial class App : System.Windows.Application
             if (ReferenceEquals(_mainWindow, window))
                 _mainWindow = null;
         };
+        window.IsVisibleChanged += (_, _) =>
+        {
+            if (!window.IsVisible) ScheduleMemoryTrim();
+        };
 
         return window;
     }
@@ -391,10 +410,10 @@ public partial class App : System.Windows.Application
             // MessageBox do WinForms — que usa GDI, não o pipeline de texto do WPF — em vez
             // de deixar o app "mudo" na bandeja. A janela quebrada é descartada para que a
             // próxima tentativa recrie do zero.
-            LogErrorSafe(ex);
+            ErrorReporter.Report("Janela principal; não foi possível exibi-la", ex);
             _mainWindow = null;
             System.Windows.Forms.MessageBox.Show(
-                $"Não foi possível abrir a janela do TMHue.\n\n{ex.Message}\n\nDetalhes em: {Path.Combine(AppPaths.LogsFolder, "errors.log")}",
+                $"Não foi possível abrir a janela do TMHue.\n\n{ex.Message}\n\nDetalhes em: {ErrorReporter.LogPath}",
                 "TMHue",
                 System.Windows.Forms.MessageBoxButtons.OK,
                 System.Windows.Forms.MessageBoxIcon.Error);
@@ -425,6 +444,7 @@ public partial class App : System.Windows.Application
 
         var window = new SettingsWindow(viewModel) { Owner = _mainWindow };
         window.ShowDialog();
+        ScheduleMemoryTrim();
         _trayIcon?.SetStartWithWindowsChecked(_services!.GetRequiredService<IStartupService>().IsEnabled);
 
         // Reflects a default-copy-format change immediately, without waiting for the next
@@ -444,6 +464,7 @@ public partial class App : System.Windows.Application
             viewModel.RefreshDefaultFormat();
         };
         window.ShowDialog();
+        ScheduleMemoryTrim();
     }
 
     private void OpenHarmonyGenerator()
@@ -455,6 +476,7 @@ public partial class App : System.Windows.Application
             () => _settings);
         var window = new HarmonyWindow(viewModel) { Owner = _mainWindow };
         window.ShowDialog();
+        ScheduleMemoryTrim();
     }
 
     // Non-modal (unlike the other tool windows): capturing a screen region requires hiding this
@@ -474,7 +496,11 @@ public partial class App : System.Windows.Application
             _services!.GetRequiredService<INotificationService>(),
             () => _settings);
         _paletteExtractorWindow = new PaletteExtractorWindow(viewModel) { Owner = _mainWindow };
-        _paletteExtractorWindow.Closed += (_, _) => _paletteExtractorWindow = null;
+        _paletteExtractorWindow.Closed += (_, _) =>
+        {
+            _paletteExtractorWindow = null;
+            ScheduleMemoryTrim();
+        };
         _paletteExtractorWindow.Show();
     }
 
@@ -484,36 +510,45 @@ public partial class App : System.Windows.Application
         Shutdown();
     }
 
-    /// <summary>Variante que nunca lança, para código de atualização em threads de fundo.</summary>
-    private static void LogErrorSafe(Exception exception)
+    /// <summary>Devolve memória ao sistema depois que o app sossega: janela enviada à bandeja,
+    /// janela de ferramenta fechada ou captura encerrada.</summary>
+    private void ScheduleMemoryTrim() => _services?.GetRequiredService<MemoryTrimmer>().ScheduleTrim();
+
+    /// <summary>Disjuntor do handler global. Engolir exceções mantém o app vivo depois de uma
+    /// falha isolada, mas uma falha que se repete sem parar não tem como se recuperar sozinha:
+    /// avisa o usuário e encerra, em vez de seguir consumindo CPU e disco na bandeja.</summary>
+    private void RegisterUnhandledFailure()
     {
+        if (_failureShutdownStarted || !_unhandledFailures.RegisterFailure(Environment.TickCount64))
+            return;
+        _failureShutdownStarted = true;
+
+        ErrorReporter.Note("Disjuntor; o app será encerrado",
+            "Dez ou mais exceções não tratadas em dez segundos. As entradas anteriores trazem a causa.");
+        ErrorReporter.Flush();
+        // MessageBox do WinForms pelo mesmo motivo de ShowMainWindow: não depende do WPF.
+        System.Windows.Forms.MessageBox.Show(
+            $"O TMHue encontrou erros repetidos e será encerrado.\n\nDetalhes em: {ErrorReporter.LogPath}",
+            "TMHue",
+            System.Windows.Forms.MessageBoxButtons.OK,
+            System.Windows.Forms.MessageBoxIcon.Error);
+
         try
         {
-            Directory.CreateDirectory(AppPaths.LogsFolder);
-            AppendErrorLog(exception);
+            ExitApplication();
         }
-        catch
+        catch (Exception exception)
         {
-            // logging must never crash update handling
+            // A saída limpa passa pela mesma UI que está falhando; se ela também falhar, o
+            // processo é encerrado diretamente.
+            ErrorReporter.Report("Encerramento após erros repetidos; saída limpa falhou", exception);
+            Environment.Exit(1);
         }
-    }
-
-    private static void AppendErrorLog(Exception exception)
-    {
-        var logPath = Path.Combine(AppPaths.LogsFolder, "errors.log");
-        var entry = $"[{DateTimeOffset.Now:yyyy-MM-dd HH:mm:ss}] {exception}{Environment.NewLine}";
-        if (entry.Length > MaxErrorLogEntryCharacters)
-            entry = entry[..MaxErrorLogEntryCharacters] + Environment.NewLine;
-
-        var entrySizeBytes = Encoding.UTF8.GetByteCount(entry);
-        if (File.Exists(logPath) && new FileInfo(logPath).Length + entrySizeBytes > MaxErrorLogBytes)
-            File.Delete(logPath);
-
-        File.AppendAllText(logPath, entry);
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
+        ErrorReporter.Flush();
         _trayIcon?.Dispose();
         _singleInstance?.Dispose();
         _services?.Dispose();

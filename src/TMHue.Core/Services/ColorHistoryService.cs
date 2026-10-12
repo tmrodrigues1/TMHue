@@ -11,10 +11,12 @@ public sealed class ColorHistoryService : IColorHistoryService
     public const int MaxItems = 10;
     public const int MaxPinned = 3;
     private const long MaxFileSizeBytes = 64 * 1024;
+    private const int MaxCaptureSourceLength = 128;
 
     private readonly List<CapturedColor> _items = new(MaxItems);
     private readonly string _historyFilePath;
     private readonly JsonSerializerOptions _jsonOptions = new() { WriteIndented = true };
+    private readonly object _saveGate = new();
 
     public ColorHistoryService(string historyFilePath)
     {
@@ -84,9 +86,9 @@ public sealed class ColorHistoryService : IColorHistoryService
             if (File.Exists(_historyFilePath))
             {
                 var json = ReadFileWithSizeLimit();
-                var loaded = JsonSerializer.Deserialize<List<CapturedColor>>(json, _jsonOptions);
+                var loaded = JsonSerializer.Deserialize<List<CapturedColor?>>(json, _jsonOptions);
                 if (loaded is not null)
-                    _items.AddRange(loaded.Take(MaxItems));
+                    _items.AddRange(loaded.OfType<CapturedColor>().Where(c => IsHex(c.Hex)).Select(Sanitize).Take(MaxItems));
             }
         }
         catch (Exception) when (IsRecoverableIoOrJsonError())
@@ -104,9 +106,22 @@ public sealed class ColorHistoryService : IColorHistoryService
         if (!string.IsNullOrEmpty(directory))
             Directory.CreateDirectory(directory);
 
-        var json = JsonSerializer.Serialize(_items, _jsonOptions);
-        AtomicFileWriter.Write(_historyFilePath, json);
+        lock (_saveGate)
+        {
+            var json = JsonSerializer.Serialize(_items, _jsonOptions);
+            AtomicFileWriter.Write(_historyFilePath, json);
+        }
     }
+
+    // Every consumer assumes "#RRGGBB"; an entry without it (hand-edited or damaged file) is
+    // dropped at load instead of failing later, in the middle of a capture.
+    private static bool IsHex(string? hex) =>
+        hex is { Length: 7 } && hex[0] == '#' && hex.Skip(1).All(char.IsAsciiHexDigit);
+
+    private static CapturedColor Sanitize(CapturedColor color) =>
+        color.CaptureSource is { Length: > MaxCaptureSourceLength } source
+            ? color with { CaptureSource = source[..MaxCaptureSourceLength] }
+            : color;
 
     private void BackupCorruptedFile()
     {
